@@ -61,14 +61,14 @@ First work with GC Data:
 rm(list = ls()) #clear workspace
 
 #read in meta-data
-gc_data_meta = read.table('gc_data_numeric.csv', 
+gc_data_meta = read.table(file.path('.','gc_data','gc_data_meta.csv'), 
   sep=",", 
   header=TRUE, 
   row.names = 1, 
   check.names = FALSE)
 
 #read in raw numeric data
-gc_data_num = read.table('gc_data_numeric.csv', 
+gc_data_num = read.table(file.path('.','gc_data','gc_data_numeric.csv'), 
   sep=",", 
   header=TRUE, 
   row.names = 1, 
