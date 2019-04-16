@@ -1,0 +1,124 @@
+---
+title: "root_stem_crown_comparison"
+output: html_notebook
+author: 'Aaron Yerke'
+---
+
+This the R Notebook for collaboration with Dr. Yogini Jaiswal for her comparison of roots, stems, and crowns.
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*. 
+
+From Yogini:
+I. Changes done in all files and annotations
+* In all the files refer to the sheet: “Combined stem and roots” and “For PCA – Stem and Roots”
+* All cells in pink indicate that the constituent is not present in the sample
+* I believe in the previous study, we used “zeros” in rows where samples were not present.
+* All values present in “Combined stem and roots” are normalised with internal standard area for GC-MS File.
+* The data generated for analytes represent relative rather than absolute concentrations (semi-quantitative) based on their areas. All values generated for these compounds are therefore “unitless” but strongly correlate to absolute concentration when comparing values for the same metabolite; however, this does not apply when comparing values between different metabolites.
+* For LC-MS analysis there are two files, negative and positive representing 2 different modes of ionisation used for analysis to have a more comprehensive identification of compounds that can be detected/ionised in both positive and negative mode. 
+* There can be compounds that may be common between both ‘positive’ and ‘negative’ mode of LC-MS analysis files. 
+
+II. Nomenclature:
+A. Crown root parts: 
+CRP: Crown root peel. 
+CNP: Crown root with ‘no’ peel
+CWO: Whole crown root
+B.  Lateral root parts: 
+LRP: whole lateral root
+C.  Stem parts: 
+SWP: Whole stem. 
+SNP: Stem with ‘no’ peel
+SP: Stem peel
+
+III.  Suggested comparisons 
+1. Whole crown root / lateral root/ stem
+2. Each part of Crown root and lateral root. 
+3. Each part of Crown root
+
+IV. Changes done in files for PCA analysis:
+
+File 1: NCAT155_GCMS_7July2017 (1)
+1. Refer to the sheet: “Combined stem and roots” and “For PCA – Stem and Roots”. 
+2. Removed the internal standard row - “Docosanoic acid, methyl ester (IS)”, as it is an internal standard used for quality control and not a constituent. 
+3. Removed putative annotations for “present” and “not present”
+
+File 2: NCAT155-Negative mode - LC-MS
+1. Refer to the sheet: “Combined stem and roots” and “For PCA – Stem and Roots”. 
+2. In this file, all samples marked in green, are the same constituent but different mass adducts. 
+    So I have discarded them in the sheet “For PCA – Stem and Roots”.  
+
+File 3: NCAT155-Positive mode- LC-MS-SORTED- Roots
+1. Refer to the sheet: “Combined stem and roots” and “For PCA – Stem and Roots”. 
+2. In this file, all samples marked in green, are the same constituent but different mass adducts. 
+    So I have discarded them in the sheet “For PCA – Stem and Roots”.  
+3. For compounds with two adducts, the adduct rows with lower areas are deleted (will check with you before deletion)
+
+
+First work with GC Data:
+```{r}
+rm(list = ls()) #clear workspace
+
+#read in meta-data
+gc_data_meta = read.table('gc_data_numeric.csv', 
+  sep=",", 
+  header=TRUE, 
+  row.names = 1, 
+  check.names = FALSE)
+
+#read in raw numeric data
+gc_data_num = read.table('gc_data_numeric.csv', 
+  sep=",", 
+  header=TRUE, 
+  row.names = 1, 
+  check.names = FALSE)
+
+
+#function to replace NA with 0
+is.nan.data.frame = function(x){
+  do.call(cbind, lapply(x, is.nan))
+}
+
+#remove zeros
+gc_data_num[is.na(gc_data_num)] <- 0
+
+gc_data_num = log2(gc_data_num + 1)
+
+#create levels
+l = gl(7, 3,
+  labels = c('CRP', 'CNP', 'CWO', 'LRP', 'SWP', 'SNP', 'SP'))
+
+#colors for boxplot
+myColors = c(rep("red",3),rep("blue",3),rep("green",3),rep('yellow', 3), rep('lightblue',3), rep('violet',3), rep('grey', 3))
+
+boxplot(gc_data_num, 
+        main = 'GC Data without log-transform'
+        #col=myColors
+        )
+boxplot(gc_data_num,
+        main = 'GC Data with log-transform',
+        col=myColors)
+```
+This tells me that we need to use the log transform. 
+
+Next look at PCA.
+```{r}
+group_pca = prcomp(t(gc_data.log), 
+  center = TRUE,
+  scale = TRUE)
+
+plot(group_pca$x[1:21], group_pca$x[22:42],
+     col=myColors)
+    legend(w)
+```
+
+
+```{r}
+delet = gc_data[5:nrow(gc_data),1:ncol(gc_data)]
+```
+
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file).
