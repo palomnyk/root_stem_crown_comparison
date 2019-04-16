@@ -67,6 +67,8 @@ gc_data_meta = read.table(file.path('.','gc_data','gc_data_meta.csv'),
   row.names = 1, 
   check.names = FALSE)
 
+# gc_data_meta = read.csv(file.path('.','gc_data','gc_data_meta.csv'))
+
 #read in raw numeric data
 gc_data_num = read.table(file.path('.','gc_data','gc_data_numeric.csv'), 
   sep=",", 
@@ -93,12 +95,12 @@ l = gl(7, 3,
 myColors = c(rep("red",3),rep("blue",3),rep("green",3),rep('yellow', 3), rep('lightblue',3), rep('violet',3), rep('grey', 3))
 
 boxplot(gc_data_num, 
-        main = 'GC Data without log-transform'
-        #col=myColors
+        main = 'GC Data without log-transform',
+        col = as.factor(gc_data_meta['plant_part',])
         )
 boxplot(gc_data_num,
         main = 'GC Data with log-transform',
-        col=myColors)
+        col=l)
 ```
 This tells me that we need to use the log transform. 
 
