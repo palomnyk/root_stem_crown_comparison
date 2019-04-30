@@ -16,7 +16,7 @@ I. Changes done in all files and annotations
 * All cells in pink indicate that the constituent is not present in the sample
 * I believe in the previous study, we used “zeros” in rows where samples were not present.
 * All values present in “Combined stem and roots” are normalised with internal standard area for GC-MS File.
-* The data generated for analytes represent relative rather than absolute concentrations (semi-quantitative) based on their areas. All values generated for these compounds are therefore “unitless” but strongly correlate to absolute concentration when comparing values for the same metabolite; however, this does not apply when comparing values between different metabolites.
+* The data generated for analytes represent relative rather than absolute concentrations (semi-quantitative) based on their areas. All values generated for these compounds are therefore “unitless” but strongly correlate to absolute concentration when comparing values for the same metabolite; however, this does not apply when comparing values between different metabos.
 * For LC-MS analysis there are two files, negative and positive representing 2 different modes of ionisation used for analysis to have a more comprehensive identification of compounds that can be detected/ionised in both positive and negative mode. 
 * There can be compounds that may be common between both ‘positive’ and ‘negative’ mode of LC-MS analysis files. 
 
@@ -61,16 +61,17 @@ First work with GC Data:
 rm(list = ls()) #clear workspace
 
 #read in meta-data
-gc_data_meta = read.table(file.path('.','gc_data','gc_data_meta.csv'), 
+meta_data = read.table(file.path('.','gc_data','meta_data.csv'), 
   sep=",", 
   header=TRUE, 
   row.names = 1, 
-  check.names = FALSE)
+  check.names = FALSE,
+  stringsAsFactors=FALSE)
 
-# gc_data_meta = read.csv(file.path('.','gc_data','gc_data_meta.csv'))
+#meta_data = read.csv(file.path('.','gc_data','meta_data.csv'),row.names=1, stringsAsFactors=FALSE)
 
 #read in raw numeric data
-gc_data_num = read.table(file.path('.','gc_data','gc_data_numeric.csv'), 
+metabolites = read.table(file.path('.','gc_data','gc_data_numeric.csv'), 
   sep=",", 
   header=TRUE, 
   row.names = 1, 
@@ -83,9 +84,15 @@ is.nan.data.frame = function(x){
 }
 
 #remove zeros
-gc_data_num[is.na(gc_data_num)] <- 0
+metabolites[is.na(metabolites)] <- 0
 
-gc_data_num = log2(gc_data_num + 1)
+#boxplot before transform
+boxplot(metabolites, 
+        main = 'GC Data without log-transform',
+        col = as.factor(meta_data['plant_part',])
+        )
+
+metabolites = log2(metabolites + 1)
 
 #create levels
 l = gl(7, 3,
@@ -94,32 +101,259 @@ l = gl(7, 3,
 #colors for boxplot
 myColors = c(rep("red",3),rep("blue",3),rep("green",3),rep('yellow', 3), rep('lightblue',3), rep('violet',3), rep('grey', 3))
 
-boxplot(gc_data_num, 
-        main = 'GC Data without log-transform',
-        col = as.factor(gc_data_meta['plant_part',])
-        )
-boxplot(gc_data_num,
-        main = 'GC Data with log-transform',
-        col=l)
+boxplot(metabolites,
+  main = 'GC Data with log-transform',
+  col=l
+)
+legend('bottomright', legend = unique(l), col = unique(l), pch = 1, cex=0.6)
 ```
-This tells me that we need to use the log transform. 
+This tells me that we need to use the log transform. Visually, only SWP seems to be radically different.
 
 Next look at PCA.
 ```{r}
-group_pca = prcomp(t(gc_data.log), 
+#create PCA
+group_pca = prcomp(t(metabolites), 
   center = TRUE,
   scale = TRUE)
 
-plot(group_pca$x[1:21], group_pca$x[22:42],
-     col=myColors)
-    legend(w)
+#extract PCA matrix and convert to dataframe
+myPCA = data.frame(group_pca$x)
+
+summary(group_pca)
+```
+PCA1 and PCA2 account for 84% cummaltively.
+
+
+```{r}
+
+palette("default")
+plot(myPCA$PC1, myPCA$PC2,
+  xlab = 'PCA1, 66% of Variance',
+  ylab = 'PCA2, 17% of Variance',
+  main = 'PCA with NA -> 0, log tranformed',
+  col=l
+)
+legend('bottomright', legend = unique(l), 
+  col = unique(l), 
+  pch = 1, 
+  cex=0.6
+)
+```
+Each part clusters seperately, which is a good sign.
+
+
+```{r}
+plot(myPCA$PC1, myPCA$PC2,
+  col=as.factor(meta_data['plant part',]))
+legend('bottomright', 
+  legend = unique(as.factor(meta_data['plant part',])), 
+  col = unique(as.factor(meta_data['plant part',])), 
+  pch = 1, 
+  cex=0.6
+  )
+```
+
+
+PCA1 and PCA2
+```{r}
+for (i in 1:nrow(meta_data)){
+  print(i)
+  plot(myPCA$PC1, myPCA$PC2,
+    col=as.factor(meta_data[i,]),
+    main = row.names(meta_data)[i]
+  )
+  legend('bottomright', legend = unique(as.factor(meta_data[i,])),
+    col = unique(as.factor(unique(meta_data[i,]))),
+    pch = 1,
+    cex=0.6
+    )
+}
+```
+
+
+PCA1 and PCA3
+```{r}
+for (i in 1:nrow(meta_data)){
+  print(i)
+  plot(myPCA$PC1, myPCA$PC3,
+    xlab = 'PCA1, 66% of Variance',
+    ylab = 'PCA3, 3% of Variance',
+    col=as.factor(meta_data[i,]),
+    main = row.names(meta_data)[i]
+    )
+  legend('bottomright', legend = unique(as.factor(meta_data[i,])), 
+    col = unique(as.factor(unique(meta_data[i,]))), 
+    pch = 1, 
+    cex=0.6)
+}
+```
+
+PCA2 and PCA3
+```{r}
+for (i in 1:nrow(meta_data)){
+  print(i)
+  plot(myPCA$PC2, myPCA$PC3,
+    col=as.factor(meta_data[i,]),
+    main = row.names(meta_data)[i],
+    xlab = 'PCA2, 17% of Variance',
+    ylab = 'PCA3, 6% of Variance'
+    )
+  legend('bottomright', legend = unique(as.factor(meta_data[i,])), 
+    col = unique(as.factor(unique(meta_data[i,]))),
+    pch = 1,
+    cex=0.6
+  )
+}
+```
+
+
+Compare each PCA to each metadata catagory using lm and anova.
+
+Expected output: Table, 
+  columns: PCAs, metadata catagory, pvals
+```{r}
+pcas = c()
+metaNames = c()
+metaPval = c()
+
+for (i1 in 1:ncol(myPCA)){
+  for (i2 in 1:nrow(meta_data)){
+    myLm = lm( myPCA[,i1] ~ as.factor(as.character(meta_data[i2,])))
+    pcas = c(pcas, i1)
+    metaNames = c(metaNames, row.names(meta_data)[i2])
+    metaPval =  c(metaPval, anova(myLm)$"Pr(>F)"[1])
+  }
+}
+
+metaPvalAdj = p.adjust(metaPval, method = "BH")
+dFrame <- data.frame(metaPvalAdj,metaNames,pcas)
+dFrame <- dFrame [order(dFrame$metaPvalAdj),]
+
+write.table(dFrame, file="gcMetaVsPCAs.txt", row.names=FALSE, sep="\t")
+
+pdf("gcMetaVsPcas.pdf")
+#par(mfrow=c(2,2))
+
+for( i in 1:nrow(dFrame)){
+	aTitle <- paste( 'PCA', dFrame$pcas[i], "vs",  dFrame$metaNames[i], "\nAdjusted Pvalue=",
+	round(dFrame$metaPvalAdj[i], digits = 4))
+	
+	plot( as.factor(as.character(meta_data[as.character(dFrame$metaNames[i]),])), 
+	  myPCA[,dFrame$pcas[i]],
+	  main = aTitle,
+	  xlab = as.character(dFrame$metaNames[i]), 
+	  ylab = paste('PCA', as.character(dFrame$pcas[i]))
+	  )
+}
+
+dev.off()
+```
+
+
+Compare each metabolite to each metadata.
+  Expected output:
+    Table: 
+      Columns: adjusted pval (sorted), metadata name, metabolite name
+```{r}
+metabos = c()
+metaNames = c()
+metaPval = c()
+
+for (i1 in 1:nrow(metabolites)){
+  for (i2 in 1:nrow(meta_data)){
+    myLm = lm( unlist(metabolites[i1,]) ~ as.factor(as.character(meta_data[i2,])))
+    metabos = c(metabos, row.names(metabolites)[i1])
+    metaNames = c(metaNames, row.names(meta_data)[i2])
+    metaPval =  c(metaPval, anova(myLm)$"Pr(>F)"[1])
+  }
+}
+
+metaPvalAdj = p.adjust(metaPval, method = "BH")
+
+dFrame <- data.frame(metaPvalAdj,metaNames,metabos)
+dFrame <- dFrame [order(dFrame$metaPvalAdj),]
+
+write.table(dFrame, file="gcMetaVsMetabolites.txt", row.names=FALSE, sep="\t")
+
+pdf("gcMetaVsMetabolites.pdf")
+#par(mfrow=c(2,2))
+
+for( i in 1:nrow(dFrame)){
+	aTitle <- paste(  dFrame$metabos[i], "vs",  dFrame$metaNames[i], "\nAdjusted Pvalue=",
+	round(dFrame$metaPvalAdj[i], digits = 4))
+	
+	plot( as.factor(as.character(meta_data[as.character(dFrame$metaNames[i]),])), 
+	  unlist(metabolites[as.character(dFrame$metabos[i]),]),
+	  main = aTitle,
+	  xlab = as.character(dFrame$metaNames[i]), 
+	  ylab = as.character(dFrame$metabos[i])
+	  )
+}
+
+dev.off()
+
+```
+
+
+PCA with NA rows removed
+```{r}
+metabolitesNA = read.table(file.path('.','gc_data','gc_data_numeric.csv'), 
+  sep=",", 
+  header=TRUE, 
+  row.names = 1, 
+  check.names = FALSE)
+```
+
+```{r}
+metabolitesNA = na.omit(metabolitesNA)
+metabolitesNA = log2(metabolitesNA +1)
 ```
 
 
 ```{r}
-delet = gc_data[5:nrow(gc_data),1:ncol(gc_data)]
+#create PCA
+group_pcaNA = prcomp(t(metabolitesNA), 
+  center = TRUE,
+  scale = TRUE)
+
+#extract PCA matrix and convert to dataframe
+myPcaNa = data.frame(group_pcaNA$x)
+
+summary(group_pca)
+
 ```
 
+```{r}
+
+palette("default")
+plot(myPcaNa$PC1, myPcaNa$PC2,
+  xlab = 'PCA1, 66% of Variance',
+  ylab = 'PCA2, 17% of Variance',
+  main = 'PCA with NA omitted, log tranformed',
+  col=l
+)
+legend('topright', legend = unique(l), 
+  col = unique(l), 
+  pch = 1, 
+  cex=0.6
+)
+```
+
+
+```{r}
+for (i in 1:nrow(meta_data)){
+  print(i)
+  plot(myPcaNa$PC1, myPcaNa$PC2,
+    col=as.factor(meta_data[i,]),
+    main = row.names(meta_data)[i]
+  )
+  legend('topright', legend = unique(as.factor(meta_data[i,])),
+    col = unique(as.factor(unique(meta_data[i,]))),
+    pch = 1,
+    cex=0.6
+    )
+}
+```
 
 Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
 
