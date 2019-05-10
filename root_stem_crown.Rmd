@@ -160,7 +160,7 @@ for (i in 1:nrow(meta_data)){
   print(i)
   plot(myPCA$PC1, myPCA$PC2,
     col=as.factor(meta_data[i,]),
-    main = row.names(meta_data)[i]
+    main = paste('NA -> zero \n', row.names(meta_data)[i])
   )
   legend('bottomright', legend = unique(as.factor(meta_data[i,])),
     col = unique(as.factor(unique(meta_data[i,]))),
@@ -169,7 +169,23 @@ for (i in 1:nrow(meta_data)){
     )
 }
 ```
-
+PCA1 and PCA2 -> file for sending to collaborators
+```{r}
+pdf("gcNaToZeroPca1_2s.pdf")
+for (i in 1:nrow(meta_data)){
+  print(i)
+  plot(myPCA$PC1, myPCA$PC2,
+    col=as.factor(meta_data[i,]),
+    main = paste('NA -> zero \n', row.names(meta_data)[i])
+  )
+  legend('bottomright', legend = unique(as.factor(meta_data[i,])),
+    col = unique(as.factor(unique(meta_data[i,]))),
+    pch = 1,
+    cex=0.6
+    )
+}
+dev.off()
+```
 
 PCA1 and PCA3
 ```{r}
@@ -324,7 +340,7 @@ summary(group_pca)
 ```
 
 ```{r}
-
+pdf("gcNaRowsDroppedPcas.pdf")
 palette("default")
 plot(myPcaNa$PC1, myPcaNa$PC2,
   xlab = 'PCA1, 66% of Variance',
@@ -337,6 +353,12 @@ legend('topright', legend = unique(l),
   pch = 1, 
   cex=0.6
 )
+dev.off()
+```
+```{r}
+function(){
+  
+}
 ```
 
 
