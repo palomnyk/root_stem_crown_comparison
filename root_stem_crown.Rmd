@@ -78,13 +78,13 @@ metabolites = read.table(file.path('.','gc_data','gc_data_numeric.csv'),
   check.names = FALSE)
 
 
-#function to replace NA with 0
-is.nan.data.frame = function(x){
-  do.call(cbind, lapply(x, is.nan))
-}
-
-#remove zeros
-metabolites[is.na(metabolites)] <- 0
+#function to replace NA with 0 #on second thought, don't do this.
+# is.nan.data.frame = function(x){
+#   do.call(cbind, lapply(x, is.nan))
+# }
+# 
+# #remove zeros
+# metabolites[is.na(metabolites)] <- 0
 
 #boxplot before transform
 boxplot(metabolites, 
@@ -105,6 +105,16 @@ boxplot(metabolites,
   main = 'GC Data with log-transform',
   col=l
 )
+par(new=TRUE)
+stripchart(metabolites,
+  method='jitter',
+  jitter=.2,
+  vertical=TRUE,
+  add=T,
+  pch=16,
+  cex = 0.6,
+  col = 'grey')
+plot.new()
 legend('bottomright', legend = unique(l), col = unique(l), pch = 1, cex=0.6)
 ```
 This tells me that we need to use the log transform. Visually, only SWP seems to be radically different.
@@ -112,7 +122,7 @@ This tells me that we need to use the log transform. Visually, only SWP seems to
 Next look at PCA.
 ```{r}
 #create PCA
-group_pca = prcomp(t(metabolites), 
+group_pca = prcomp(t(na.omit(metabolites)), 
   center = TRUE,
   scale = TRUE)
 
@@ -124,43 +134,13 @@ summary(group_pca)
 PCA1 and PCA2 account for 84% cummaltively.
 
 
-```{r}
-
-palette("default")
-plot(myPCA$PC1, myPCA$PC2,
-  xlab = 'PCA1, 66% of Variance',
-  ylab = 'PCA2, 17% of Variance',
-  main = 'PCA with NA -> 0, log tranformed',
-  col=l
-)
-legend('bottomright', legend = unique(l), 
-  col = unique(l), 
-  pch = 1, 
-  cex=0.6
-)
-```
-Each part clusters seperately, which is a good sign.
-
-
-```{r}
-plot(myPCA$PC1, myPCA$PC2,
-  col=as.factor(meta_data['plant part',]))
-legend('bottomright', 
-  legend = unique(as.factor(meta_data['plant part',])), 
-  col = unique(as.factor(meta_data['plant part',])), 
-  pch = 1, 
-  cex=0.6
-  )
-```
-
-
 PCA1 and PCA2
 ```{r}
 for (i in 1:nrow(meta_data)){
   print(i)
   plot(myPCA$PC1, myPCA$PC2,
     col=as.factor(meta_data[i,]),
-    main = paste('NA -> zero \n', row.names(meta_data)[i])
+    main = paste('Catagory: ', row.names(meta_data)[i])
   )
   legend('bottomright', legend = unique(as.factor(meta_data[i,])),
     col = unique(as.factor(unique(meta_data[i,]))),
@@ -171,12 +151,11 @@ for (i in 1:nrow(meta_data)){
 ```
 PCA1 and PCA2 -> file for sending to collaborators
 ```{r}
-pdf("gcNaToZeroPca1_2s.pdf")
+pdf("gcPca1_2.pdf")
 for (i in 1:nrow(meta_data)){
-  print(i)
   plot(myPCA$PC1, myPCA$PC2,
     col=as.factor(meta_data[i,]),
-    main = paste('NA -> zero \n', row.names(meta_data)[i])
+    main = paste('Catagory: ', row.names(meta_data)[i])
   )
   legend('bottomright', legend = unique(as.factor(meta_data[i,])),
     col = unique(as.factor(unique(meta_data[i,]))),
@@ -307,35 +286,6 @@ for( i in 1:nrow(dFrame)){
 }
 
 dev.off()
-
-```
-
-
-PCA with NA rows removed
-```{r}
-metabolitesNA = read.table(file.path('.','gc_data','gc_data_numeric.csv'), 
-  sep=",", 
-  header=TRUE, 
-  row.names = 1, 
-  check.names = FALSE)
-```
-
-```{r}
-metabolitesNA = na.omit(metabolitesNA)
-metabolitesNA = log2(metabolitesNA +1)
-```
-
-
-```{r}
-#create PCA
-group_pcaNA = prcomp(t(metabolitesNA), 
-  center = TRUE,
-  scale = TRUE)
-
-#extract PCA matrix and convert to dataframe
-myPcaNa = data.frame(group_pcaNA$x)
-
-summary(group_pca)
 
 ```
 
