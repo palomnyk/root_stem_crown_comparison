@@ -22,20 +22,39 @@ I. Changes done in all files and annotations
 
 II. Nomenclature:
 A. Crown root parts: 
-CRP: Crown root peel. 
-CNP: Crown root with ‘no’ peel
-CWO: Whole crown root
-B.  Lateral root parts: 
-LRP: whole lateral root
-C.  Stem parts: 
-SWP: Whole stem. 
-SNP: Stem with ‘no’ peel
-SP: Stem peel
+  CRP: Crown root peel. 
+  CNP: Crown root with ‘no’ peel
+  CWO: Whole crown root
+B. Lateral root parts: 
+  LRP: whole lateral root
+C. Stem parts: 
+  SWP: Whole stem. 
+  SNP: Stem with ‘no’ peel
+  SP: Stem peel
 
-III.  Suggested comparisons 
+III.A  Suggested comparisons by Dr. Jaiswal with Aaron's Notes
 1. Whole crown root / lateral root/ stem
-2. Each part of Crown root and lateral root. 
+  Cycle through all of the metabolites and do ALL the metadata catagories
+    lme(metabo ~ metad, method= "REML", random = ~1 | plant_number, data = myD)
+    then anova
+    
+    table showing pvals for each test for each metabolite
+      metabo test1 test2 test3 ...
+    
+2. Each part of Crown root and lateral root.
+  lme with random effects of sample number
+  
 3. Each part of Crown root
+  3 Samples each with 3 sections: CRP, CNP, CWO
+    lme with random effect on sample number
+    ANOVA
+    
+III.B  Additional tests suggested by Aaron
+1. Comparison of each metabolite to the top three mds axis
+  Add Pval for plant_num to show this isn't a batch effect
+
+2. Comparison of each metadata to the top three mds axis
+
 
 IV. Changes done in files for PCA analysis:
 
@@ -56,19 +75,19 @@ File 3: NCAT155-Positive mode- LC-MS-SORTED- Roots
 3. For compounds with two adducts, the adduct rows with lower areas are deleted (will check with you before deletion)
 
 
-First work with GC Data:
+First load the data:
 ```{r}
 rm(list = ls()) #clear workspace
 
 #read in meta-data
-meta_data = read.table(file.path('.','gc_data','meta_data.csv'), 
+metadata = read.table(file.path('.','gc_data','meta_data.csv'), 
   sep=",", 
   header=TRUE, 
   row.names = 1, 
   check.names = FALSE,
   stringsAsFactors=FALSE)
 
-#meta_data = read.csv(file.path('.','gc_data','meta_data.csv'),row.names=1, stringsAsFactors=FALSE)
+#meta_data = read.csv(file.path('.','gc_data','metadata.csv'),row.names=1, stringsAsFactors=FALSE)
 
 #read in raw numeric data
 metabolites = read.table(file.path('.','gc_data','gc_data_numeric.csv'), 
@@ -77,7 +96,9 @@ metabolites = read.table(file.path('.','gc_data','gc_data_numeric.csv'),
   row.names = 1, 
   check.names = FALSE)
 
-
+dim(metabolites)
+```
+```{r}
 #function to replace NA with 0 #on second thought, don't do this.
 # is.nan.data.frame = function(x){
 #   do.call(cbind, lapply(x, is.nan))
@@ -89,7 +110,7 @@ metabolites = read.table(file.path('.','gc_data','gc_data_numeric.csv'),
 #boxplot before transform
 boxplot(metabolites, 
         main = 'GC Data without log-transform',
-        col = as.factor(meta_data['plant_part',])
+        col = as.factor(metadata['plant_part',])
         )
 
 metabolites = log2(metabolites + 1)
@@ -115,7 +136,7 @@ stripchart(metabolites,
   cex = 0.6,
   col = 'grey')
 plot.new()
-legend('bottomright', legend = unique(l), col = unique(l), pch = 1, cex=0.6)
+legend('bottomright', legend = unique(l), col = unique(l), pch = 1, cex=0.4)
 ```
 This tells me that we need to use the log transform. Visually, only SWP seems to be radically different.
 
@@ -136,14 +157,14 @@ PCA1 and PCA2 account for 84% cummaltively.
 
 PCA1 and PCA2
 ```{r}
-for (i in 1:nrow(meta_data)){
+for (i in 1:nrow(metadata)){
   print(i)
   plot(myPCA$PC1, myPCA$PC2,
-    col=as.factor(meta_data[i,]),
-    main = paste('Catagory: ', row.names(meta_data)[i])
+    col=as.factor(metadata[i,]),
+    main = paste('Catagory: ', row.names(metadata)[i])
   )
-  legend('bottomright', legend = unique(as.factor(meta_data[i,])),
-    col = unique(as.factor(unique(meta_data[i,]))),
+  legend('topright', legend = unique(as.factor(metadata[i,])),
+    col = unique(as.factor(unique(metadata[i,]))),
     pch = 1,
     cex=0.6
     )
@@ -152,13 +173,13 @@ for (i in 1:nrow(meta_data)){
 PCA1 and PCA2 -> file for sending to collaborators
 ```{r}
 pdf("gcPca1_2.pdf")
-for (i in 1:nrow(meta_data)){
+for (i in 1:nrow(metadata)){
   plot(myPCA$PC1, myPCA$PC2,
-    col=as.factor(meta_data[i,]),
-    main = paste('Catagory: ', row.names(meta_data)[i])
+    col=as.factor(metadata[i,]),
+    main = paste('Catagory: ', row.names(metadata)[i])
   )
-  legend('bottomright', legend = unique(as.factor(meta_data[i,])),
-    col = unique(as.factor(unique(meta_data[i,]))),
+  legend('bottomright', legend = unique(as.factor(metadata[i,])),
+    col = unique(as.factor(unique(metadata[i,]))),
     pch = 1,
     cex=0.6
     )
@@ -168,16 +189,16 @@ dev.off()
 
 PCA1 and PCA3
 ```{r}
-for (i in 1:nrow(meta_data)){
+for (i in 1:nrow(metadata)){
   print(i)
   plot(myPCA$PC1, myPCA$PC3,
     xlab = 'PCA1, 66% of Variance',
     ylab = 'PCA3, 3% of Variance',
-    col=as.factor(meta_data[i,]),
-    main = row.names(meta_data)[i]
+    col=as.factor(metadata[i,]),
+    main = row.names(metadata)[i]
     )
-  legend('bottomright', legend = unique(as.factor(meta_data[i,])), 
-    col = unique(as.factor(unique(meta_data[i,]))), 
+  legend('bottomright', legend = unique(as.factor(metadata[i,])), 
+    col = unique(as.factor(unique(metadata[i,]))), 
     pch = 1, 
     cex=0.6)
 }
@@ -185,16 +206,16 @@ for (i in 1:nrow(meta_data)){
 
 PCA2 and PCA3
 ```{r}
-for (i in 1:nrow(meta_data)){
+for (i in 1:nrow(metadata)){
   print(i)
   plot(myPCA$PC2, myPCA$PC3,
-    col=as.factor(meta_data[i,]),
-    main = row.names(meta_data)[i],
+    col=as.factor(metadata[i,]),
+    main = row.names(metadata)[i],
     xlab = 'PCA2, 17% of Variance',
     ylab = 'PCA3, 6% of Variance'
     )
-  legend('bottomright', legend = unique(as.factor(meta_data[i,])), 
-    col = unique(as.factor(unique(meta_data[i,]))),
+  legend('bottomright', legend = unique(as.factor(metadata[i,])), 
+    col = unique(as.factor(unique(metadata[i,]))),
     pch = 1,
     cex=0.6
   )
@@ -212,10 +233,10 @@ metaNames = c()
 metaPval = c()
 
 for (i1 in 1:ncol(myPCA)){
-  for (i2 in 1:nrow(meta_data)){
-    myLm = lm( myPCA[,i1] ~ as.factor(as.character(meta_data[i2,])))
+  for (i2 in 1:nrow(metadata)){
+    myLm = lm( myPCA[,i1] ~ as.factor(as.character(metadata[i2,])))
     pcas = c(pcas, i1)
-    metaNames = c(metaNames, row.names(meta_data)[i2])
+    metaNames = c(metaNames, row.names(metadata)[i2])
     metaPval =  c(metaPval, anova(myLm)$"Pr(>F)"[1])
   }
 }
@@ -233,7 +254,7 @@ for( i in 1:nrow(dFrame)){
 	aTitle <- paste( 'PCA', dFrame$pcas[i], "vs",  dFrame$metaNames[i], "\nAdjusted Pvalue=",
 	round(dFrame$metaPvalAdj[i], digits = 4))
 	
-	plot( as.factor(as.character(meta_data[as.character(dFrame$metaNames[i]),])), 
+	plot( as.factor(as.character(metadata[as.character(dFrame$metaNames[i]),])), 
 	  myPCA[,dFrame$pcas[i]],
 	  main = aTitle,
 	  xlab = as.character(dFrame$metaNames[i]), 
@@ -249,11 +270,143 @@ Compare each metabolite to each metadata.
   Expected output:
     Table: 
       Columns: adjusted pval (sorted), metadata name, metabolite name
+
+```{r}
+
+metabo = unlist(metabolitesNaO[i1,])
+metad = unlist(metadata[i2,])
+pn = unlist(metadata['plant number',])
+myD = data.frame(metabo, metad, pn)
+myLme = lme(metabo ~ metad, 
+  method= "REML", 
+  random = ~1 | pn, 
+  na.action = 'na.omit',
+  data = myD)
+test = anova(myLme)
+```
+
+      
+      
+```{r}
+if(!require(nlme)){install.packages("nlme")}
+library("nlme")
+
+metaboliteNames = c()
+metadataCatagories = c()
+pvals = c()
+
+metabolitesNaO = na.omit(metabolites)
+
+for (i1 in 1:nrow(metabolitesNaO)){
+  for (i2 in 1:nrow(metadata)){
+    if (row.names(metadata)[i2] != 'plant number'){
+      #myLm = lm( unlist(metabolites[i1,]) ~ as.factor(as.character(metadata[i2,])))
+      metabo = unlist(metabolitesNaO[i1,])
+      metad = unlist(metadata[i2,])
+      pn = unlist(metadata['plant number',])
+      myD = data.frame(metabo, metad, pn)
+      myLme = lme(metabo ~ metad, 
+        method= "REML", 
+        random = ~1 | pn, 
+        na.action = 'na.omit',
+        data = myD)
+      myAnova = anova(myLme)
+      metaboliteNames = c(metaboliteNames, row.names(metabolitesNaO)[i1])
+      metadataCatagories = c(metadataCatagories, row.names(metadata)[i2])
+      pvals =  c(pvals, myAnova$"p-value"[2])
+    }
+  }
+}
+
+metaPvalAdj = p.adjust(metaPval, method = "BH")
+
+dFrame <- data.frame(metaPval,metaPvalAdj,metaNames,metabos)
+dFrame <- dFrame [order(dFrame$metaPvalAdj),]
+
+write.table(dFrame, file="gcMetaVsMetabolites.txt", row.names=FALSE, sep="\t")
+
+pdf("gcMetaVsMetabolites.pdf")
+#par(mfrow=c(2,2))
+
+for( i in 1:nrow(dFrame)){
+	aTitle <- paste(  dFrame$metabos[i], "vs",  dFrame$metaNames[i], "\nAdjusted Pvalue=", dFrame$metaPvalAdj[i])
+
+	plot( as.factor(as.character(metadata[as.character(dFrame$metaNames[i]),])),
+	  unlist(metabolites[as.character(dFrame$metabos[i]),]),
+	  main = aTitle,
+	  xlab = as.character(dFrame$metaNames[i]),
+	  ylab = as.character(dFrame$metabos[i])
+	  )
+}
+
+dev.off()
+
+```
+```{r}
+if(!require(multcomp)){install.packages("multcomp")}
+require(multcomp)
+
+posthoc = glht(myLme,
+  linfct = mcp(metad="Tukey"))
+
+mcs = summary(posthoc,
+  test=adjusted("single-step"))
+
+```
+
+
+How do I get the pvals out?
+```{r}
+if(!require(emmeans)){install.packages("emmeans")}
+library(emmeans)
+
+leastsquare = lsmeans(myLme, 
+                      pairwise ~ metad, 
+                      adjust="tukey")       ###  Tukey-adjusted comparisons
+
+leastsquare
+
+```
+```{r}
+if(!require(lme4)){install.packages("lme4")}
+if(!require(TukeyC)){install.packages("TukeyC")}
+library(TukeyC)
+
+#https://stats.stackexchange.com/questions/13166/rs-lmer-cheat-sheet
+myLmer = lmer(metabo ~ metad, 
+  method= "REML", 
+  random = ~1 | pn, 
+  na.action = 'na.omit',
+  data = myD)
+
+
+tuk = TukeyC(myLmer,
+             # model = 'metabo ~ metad + Error(pn)',
+             # error = 'pn',
+             # which = 'metad',
+             # fl1=1,
+             sig.level = 0.05)
+
+summary(tuk)
+```
+
+```{r}
+random.effects(myLme)
+
+```
+```{r}
+summary(myLme)
+```
+
+
+Compare each metabolite to each metadata.
+  Expected output:
+    Table: 
+      Columns: adjusted pval (sorted), metadata name, metabolite name
 ```{r}
 metabos = c()
 metaNames = c()
 metaPval = c()
-
 for (i1 in 1:nrow(metabolites)){
   for (i2 in 1:nrow(meta_data)){
     myLm = lm( unlist(metabolites[i1,]) ~ as.factor(as.character(meta_data[i2,])))
@@ -262,17 +415,12 @@ for (i1 in 1:nrow(metabolites)){
     metaPval =  c(metaPval, anova(myLm)$"Pr(>F)"[1])
   }
 }
-
 metaPvalAdj = p.adjust(metaPval, method = "BH")
-
 dFrame <- data.frame(metaPvalAdj,metaNames,metabos)
 dFrame <- dFrame [order(dFrame$metaPvalAdj),]
-
 write.table(dFrame, file="gcMetaVsMetabolites.txt", row.names=FALSE, sep="\t")
-
 pdf("gcMetaVsMetabolites.pdf")
 #par(mfrow=c(2,2))
-
 for( i in 1:nrow(dFrame)){
 	aTitle <- paste(  dFrame$metabos[i], "vs",  dFrame$metaNames[i], "\nAdjusted Pvalue=",
 	round(dFrame$metaPvalAdj[i], digits = 4))
@@ -284,9 +432,7 @@ for( i in 1:nrow(dFrame)){
 	  ylab = as.character(dFrame$metabos[i])
 	  )
 }
-
 dev.off()
-
 ```
 
 ```{r}
@@ -313,14 +459,14 @@ function(){
 
 
 ```{r}
-for (i in 1:nrow(meta_data)){
+for (i in 1:nrow(metadata)){
   print(i)
   plot(myPcaNa$PC1, myPcaNa$PC2,
-    col=as.factor(meta_data[i,]),
-    main = row.names(meta_data)[i]
+    col=as.factor(metadata[i,]),
+    main = row.names(metadata)[i]
   )
-  legend('topright', legend = unique(as.factor(meta_data[i,])),
-    col = unique(as.factor(unique(meta_data[i,]))),
+  legend('topright', legend = unique(as.factor(metadata[i,])),
+    col = unique(as.factor(unique(metadata[i,]))),
     pch = 1,
     cex=0.6
     )
