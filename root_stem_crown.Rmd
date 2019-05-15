@@ -273,7 +273,7 @@ Compare each metabolite to each metadata.
 
 ```{r}
 
-metabo = unlist(metabolitesNaO[i1,])
+metabo = unlist(metabolites[i1,])
 metad = unlist(metadata[i2,])
 pn = unlist(metadata['plant number',])
 myD = data.frame(metabo, metad, pn)
@@ -289,33 +289,52 @@ test = anova(myLme)
       
 ```{r}
 if(!require(nlme)){install.packages("nlme")}
+if(!require(multcomp)){install.packages("multcomp")}
+library("multcomp")
 library("nlme")
+
+plantPart = list()
+experimentalGroup = list()
 
 metaboliteNames = c()
 metadataCatagories = c()
 pvals = c()
 
-metabolitesNaO = na.omit(metabolites)
+#vessel to hold the failures for future reference
+failedLme = c()#(metabolite_row  metadata_row), should be a vector of vectors
 
-for (i1 in 1:nrow(metabolitesNaO)){
+for (i1 in 1:nrow(metabolites)){
+  print(paste('i1:',i1))
   for (i2 in 1:nrow(metadata)){
+    print(paste('i2:',i2))
     if (row.names(metadata)[i2] != 'plant number'){
-      #myLm = lm( unlist(metabolites[i1,]) ~ as.factor(as.character(metadata[i2,])))
-      metabo = unlist(metabolitesNaO[i1,])
-      metad = unlist(metadata[i2,])
+      metabo = unlist(metabolites[i1,])
+      metad = as.factor(unlist(metadata[i2,]))
       pn = unlist(metadata['plant number',])
       myD = data.frame(metabo, metad, pn)
+      
+      tryCatch()
       myLme = lme(metabo ~ metad, 
         method= "REML", 
         random = ~1 | pn, 
         na.action = 'na.omit',
         data = myD)
       myAnova = anova(myLme)
-      metaboliteNames = c(metaboliteNames, row.names(metabolitesNaO)[i1])
+      myPval = myAnova$"p-value"[2]
+      if(myPval < 0.05){
+        if(row.names(metadata)[i2] == 'plant part'){
+          print('plant part')
+        }
+        if(row.names(metadata)[i2] == 'experimental group'){
+          print('experimental group')
+        }
+      }
+      metaboliteNames = c(metaboliteNames, row.names(metabolites)[i1])
       metadataCatagories = c(metadataCatagories, row.names(metadata)[i2])
-      pvals =  c(pvals, myAnova$"p-value"[2])
+      pvals =  c(pvals, myPval)
     }
   }
+
 }
 
 metaPvalAdj = p.adjust(metaPval, method = "BH")
@@ -352,6 +371,7 @@ posthoc = glht(myLme,
 mcs = summary(posthoc,
   test=adjusted("single-step"))
 
+mcs
 ```
 
 
