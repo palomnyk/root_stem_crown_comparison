@@ -79,6 +79,9 @@ First load the data:
 ```{r}
 rm(list = ls()) #clear workspace
 
+#declare dataset
+ds = 'gc'
+
 #read in meta-data
 metadata = read.table(file.path('.','gc_data','meta_data.csv'), 
   sep=",", 
@@ -90,7 +93,7 @@ metadata = read.table(file.path('.','gc_data','meta_data.csv'),
 #meta_data = read.csv(file.path('.','gc_data','metadata.csv'),row.names=1, stringsAsFactors=FALSE)
 
 #read in raw numeric data
-metabolites = read.table(file.path('.','gc_data','gc_data_numeric.csv'), 
+metabolites = read.table(file.path('.', 'gc_data','gc_data_numeric.csv'), 
   sep=",", 
   header=TRUE, 
   row.names = 1, 
@@ -174,10 +177,12 @@ for (i in 1:nrow(metadata)){
 ```
 PCA1 and PCA2 -> file for sending to collaborators
 ```{r}
-pdf("gcPca1_2.pdf")
+pdf(paste(ds, "Pca1_2.pdf", sep=""))
 for (i in 1:nrow(metadata)){
   plot(myPCA$PC1, myPCA$PC2,
     col=as.factor(metadata[i,]),
+    pch = 19,
+    cex = 1.3,
     main = paste('Catagory: ', row.names(metadata)[i])
   )
   legend('bottomright', legend = unique(as.factor(metadata[i,])),
@@ -197,7 +202,9 @@ for (i in 1:nrow(metadata)){
     xlab = 'PCA1, 66% of Variance',
     ylab = 'PCA3, 3% of Variance',
     col=as.factor(metadata[i,]),
-    main = row.names(metadata)[i]
+    main = row.names(metadata)[i],
+    pch = 19,
+    cex = 1.3
     )
   legend('bottomright', legend = unique(as.factor(metadata[i,])), 
     col = unique(as.factor(unique(metadata[i,]))), 
@@ -249,14 +256,13 @@ metaPvalAdj = p.adjust(metaPval, method = "BH")
 dFrame <- data.frame(metaPvalAdj,metaNames,pcas)
 dFrame <- dFrame [order(dFrame$metaPvalAdj),]
 
-write.table(dFrame, file="gcMetaVsPCAs.txt", row.names=FALSE, sep="\t")
+write.table(dFrame, file=paste(ds, "MetaVsPCAsLinearMod.txt", sep = ''), row.names=FALSE, sep="\t")
 
-pdf("gcMetaVsPcas.pdf")
+pdf(paste(ds,"MetaVsPcasLinearMod.pdf", sep = ""))
 #par(mfrow=c(2,2))
 
 for( i in 1:nrow(dFrame)){
-	aTitle <- paste( 'PCA', dFrame$pcas[i], "vs",  dFrame$metaNames[i], "\nAdjusted Pvalue=",
-	round(dFrame$metaPvalAdj[i], digits = 4))
+	aTitle <- paste('PCA', dFrame$pcas[i], "vs",  dFrame$metaNames[i], "\nAdjusted Pvalue=", dFrame$metaPvalAdj[i])
 	
 	plot( as.factor(as.character(metadata[as.character(dFrame$metaNames[i]),])), 
 	  myPCA[,dFrame$pcas[i]],
@@ -278,8 +284,8 @@ Compare each metabolite to each metadata.
       Names and rows of metadata and metabolites for failed attempts,
     Table3:
       Posthoc pvalues for 'plant part'
-    Table4:
-      Post hoc pvalues for 'experimental group'
+    Table4 and Table5:
+      Post hoc pvalues for 'experimental group' and 'plant part'
     Box plots for each metabolite and each metadata
 ```{r}
 if(!require(nlme)){install.packages("nlme")}
@@ -295,7 +301,7 @@ metadataCatagories = c()
 pvals = c()
 
 #vessel to hold the failures for future reference
-failedLme <<- data.frame(
+failedLme <<- data.frame(#'<<-' gives global scope
   metaboliteName = character(0), 
   metaboliteRowNum = numeric(0), 
   metadataName = character(0), 
@@ -373,9 +379,10 @@ metaPvalAdj = p.adjust(metaPval, method = "BH")
 dFrame <- data.frame(metaPval,metaPvalAdj,metaNames,metabos)
 dFrame <- dFrame [order(dFrame$metaPvalAdj),]
 
-write.table(dFrame, file="gcMetaVsMetabolites.txt", row.names=FALSE, sep="\t")
+write.table(dFrame, file=paste(ds, "MetaVsMetabolites.txt", sep = ''), row.names=FALSE, sep="\t")
 
-pdf("gcMetaVsMetabolites.pdf")
+write.table(failedLme, file=paste(ds, "MetaVsMetabolitesFails.txt", sep = ''), row.names=FALSE, sep="\t")
+pdf(paste(ds, "MetaVsMetabolites.pdf", sep=""))
 #par(mfrow=c(2,2))
 
 for( i in 1:nrow(dFrame)){
