@@ -312,7 +312,7 @@ pvals = c()
 failedLme <<- data.frame(#'<<-' gives global scope
   metaboliteName = character(0), 
   metaboliteRowNum = numeric(0), 
-  metadataName = character(0), 
+  metadataName = character(0),  
   metadataRowNum = numeric(0)
   )
 
@@ -350,13 +350,9 @@ for (i1 in 1:nrow(metabolites)){
             myMetabo = row.names(metabolites)[i1]
             names(myMetabo) = 'metabolite'
             
-            index = names(plantPartPostHoc)
-            
-            myRow = myRow.sort(key=lambda (x,y): index.index(myRow))
-            print(paste('after sort: ', myRow))
             myRow = c(myMetabo, myRow)
             print(myRow)
-            plantPartPostHoc <<- rbind(plantPartPostHoc, myRow)
+            plantPartPostHoc <<- rbind(plantPartPostHoc, data.frame(myRow))
           }
           if(row.names(metadata)[i2] == 'experimental group'){
             #print('experimental group')
@@ -433,50 +429,6 @@ mcs = summary(posthoc,
   test=adjusted("single-step"))
 
 mcs
-```
-
-
-How do I get the pvals out?
-```{r}
-if(!require(emmeans)){install.packages("emmeans")}
-library(emmeans)
-
-leastsquare = lsmeans(myLme, 
-                      pairwise ~ metad, 
-                      adjust="tukey")       ###  Tukey-adjusted comparisons
-
-leastsquare
-
-```
-```{r}
-if(!require(lme4)){install.packages("lme4")}
-if(!require(TukeyC)){install.packages("TukeyC")}
-library(TukeyC)
-
-#https://stats.stackexchange.com/questions/13166/rs-lmer-cheat-sheet
-myLmer = lmer(metabo ~ metad, 
-  method= "REML", 
-  random = ~1 | pn, 
-  na.action = 'na.omit',
-  data = myD)
-
-
-tuk = TukeyC(myLmer,
-             # model = 'metabo ~ metad + Error(pn)',
-             # error = 'pn',
-             # which = 'metad',
-             # fl1=1,
-             sig.level = 0.05)
-
-summary(tuk)
-```
-
-```{r}
-random.effects(myLme)
-
-```
-```{r}
-summary(myLme)
 ```
 
 
