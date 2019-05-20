@@ -286,6 +286,8 @@ Compare each metabolite to each metadata.
       Posthoc pvalues for 'plant part'
     Table4 and Table5:
       Post hoc pvalues for 'experimental group' and 'plant part'
+        Table5 Columns:
+          Metabolite | lateral_root - crown_root | stem - crown_root | stem - lateral_root
     Box plots for each metabolite and each metadata
 ```{r}
 if(!require(nlme)){install.packages("nlme")}
@@ -293,7 +295,13 @@ if(!require(multcomp)){install.packages("multcomp")}
 library("multcomp")
 library("nlme")
 
-plantPart = list()
+plantPartPostHoc <<- data.frame(
+  metaboliteName = character(0),
+  lrcr = numeric(0),
+  scr = numeric(0),
+  slr = numeric(0)
+)
+colnames(plantPartPostHoc) = c('metabolites', 'lateral_root - crown_root', 'stem - lateral_root', 'stem - crown_root')
 experimentalGroup = list()
 
 metaboliteNames = c()
@@ -313,13 +321,12 @@ for (i1 in 1:nrow(metabolites)){
   for (i2 in 1:nrow(metadata)){
     #print(paste('i2:',i2))
     if (row.names(metadata)[i2] != 'plant number'){
-      metabo = unlist(metabolites[i1,])
-      metad = as.factor(unlist(metadata[i2,]))
-      pn = unlist(metadata['plant number',])
-      myD = data.frame(metabo, metad, pn)
-      
       tryCatch(
         {
+        metabo = unlist(metabolites[i1,])
+        metad = as.factor(unlist(metadata[i2,]))
+        pn = unlist(metadata['plant number',])
+        myD = data.frame(metabo, metad, pn)
         myLme = lme(metabo ~ metad, 
           method= "REML", 
           random = ~1 | pn, 
@@ -332,12 +339,24 @@ for (i1 in 1:nrow(metabolites)){
           if(row.names(metadata)[i2] == 'plant part'){
             #print('plant part')
             posthoc = glht(myLme,
-            linfct = mcp(metad="Tukey"))
-            
+              linfct = mcp(metad="Tukey")
+            )
             mcs = summary(posthoc,
-              test=adjusted("single-step"))
+              test=adjusted("single-step")
+            )
+            myRow = as.list(mcs$test$pvalues)
+            names(myRow) = names(mcs$test$tstat)
             
-            #print(mcs$test$pvalues)
+            myMetabo = row.names(metabolites)[i1]
+            names(myMetabo) = 'metabolite'
+            
+            index = names(plantPartPostHoc)
+            
+            myRow = myRow.sort(key=lambda (x,y): index.index(myRow))
+            print(paste('after sort: ', myRow))
+            myRow = c(myMetabo, myRow)
+            print(myRow)
+            plantPartPostHoc <<- rbind(plantPartPostHoc, myRow)
           }
           if(row.names(metadata)[i2] == 'experimental group'){
             #print('experimental group')
@@ -374,25 +393,29 @@ for (i1 in 1:nrow(metabolites)){
 
 }
 
-metaPvalAdj = p.adjust(metaPval, method = "BH")
+pvalAdj = p.adjust(pvals, method = "BH")
 
-dFrame <- data.frame(metaPval,metaPvalAdj,metaNames,metabos)
-dFrame <- dFrame [order(dFrame$metaPvalAdj),]
+dFrame <- data.frame(pvals,pvalAdj,metaboliteNames,metadataCatagories)
+dFrame <- dFrame [order(dFrame$pvalAdj),]
 
-write.table(dFrame, file=paste(ds, "MetaVsMetabolites.txt", sep = ''), row.names=FALSE, sep="\t")
 
-write.table(failedLme, file=paste(ds, "MetaVsMetabolitesFails.txt", sep = ''), row.names=FALSE, sep="\t")
-pdf(paste(ds, "MetaVsMetabolites.pdf", sep=""))
+write.table(dFrame, file=paste(ds, "MetaVsMetabolitesLme.txt", sep = ''), row.names=FALSE, sep="\t")
+
+write.table(plantPartPostHoc, file=paste(ds, "PlantPartsPostHocLme.txt", sep = ''), row.names=FALSE, sep="\t")
+
+write.table(failedLme, file=paste(ds, "MetaVsMetabolitesFailsLme.txt", sep = ''), row.names=FALSE, sep="\t")
+
+pdf(paste(ds, "MetaVsMetabolitesLme.pdf", sep=""))
 #par(mfrow=c(2,2))
 
 for( i in 1:nrow(dFrame)){
-	aTitle <- paste(  dFrame$metabos[i], "vs",  dFrame$metaNames[i], "\nAdjusted Pvalue=", dFrame$metaPvalAdj[i])
+	aTitle <- paste(  dFrame$metaboliteNames[i], "vs",  dFrame$metadataCatagories[i], "\nAdjusted Pvalue=", dFrame$pvalAdj[i])
 
-	plot( as.factor(as.character(metadata[as.character(dFrame$metaNames[i]),])),
-	  unlist(metabolites[as.character(dFrame$metabos[i]),]),
+	plot( as.factor(as.character(metadata[as.character(dFrame$metadataCatagories[i]),])),
+	  unlist(metabolites[as.character(dFrame$metaboliteNames[i]),]),
 	  main = aTitle,
-	  xlab = as.character(dFrame$metaNames[i]),
-	  ylab = as.character(dFrame$metabos[i])
+	  xlab = as.character(dFrame$metadataCatagories[i]),
+	  ylab = as.character(dFrame$metaboliteNames[i])
 	  )
 }
 
