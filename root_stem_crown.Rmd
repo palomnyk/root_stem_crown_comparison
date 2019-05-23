@@ -102,33 +102,19 @@ metabolites = read.table(file.path('.', 'gc_data','gc_data_numeric.csv'),
 dim(metabolites)
 ```
 ```{r}
-#function to replace NA with 0 #on second thought, don't do this.
-# is.nan.data.frame = function(x){
-#   do.call(cbind, lapply(x, is.nan))
-# }
-# 
-# #remove zeros
-# metabolites[is.na(metabolites)] <- 0
-
 #boxplot before transform
-boxplot(metabolites, 
-        main = 'GC Data without log-transform',
-        col = as.factor(metadata['plant_part',])
-        )
-
-metabolites = log2(metabolites + 1)
-
-#create levels
-l = gl(7, 3,
-  labels = c('CRP', 'CNP', 'CWO', 'LRP', 'SWP', 'SNP', 'SP'))
-
-#colors for boxplot
-myColors = c(rep("red",3),rep("blue",3),rep("green",3),rep('yellow', 3), rep('lightblue',3), rep('violet',3), rep('grey', 3))
-
 boxplot(metabolites,
-  main = paste(toupper(ds), 'Data with log-transform'),
-  col=l
+  main = paste(toupper(ds), 'Data without log-transform'),
+  col = as.factor(metadata['experimental group',]),
+  xlab = "Experimental Groups",
+  xaxt = 'n'
 )
+mtext(text= unique(as.factor(metadata['experimental group',])),
+  side = 1,
+  outer = FALSE,
+  at = seq(2, 21, by = 3),
+  line = 1
+  )
 par(new=TRUE)
 stripchart(metabolites,
   method='jitter',
@@ -137,11 +123,53 @@ stripchart(metabolites,
   add=T,
   pch=16,
   cex = 0.6,
-  col = 'grey',
-  xlab = metadata['experimental group',]
+  col = 'grey'
   )
 plot.new()
-legend('bottomright', legend = unique(l), col = unique(l), pch = 1, cex=0.4)
+legend('bottomright', 
+  legend = unique(as.factor(metadata['experimental group',])), 
+  col = unique(as.factor(metadata['experimental group',])), 
+  pch = 19,
+  cex=0.4
+  )
+```
+This plot is hard to see.  Let's try log transform..
+
+
+```{r}
+metabolites = log2(metabolites + 1)
+```
+
+```{r}
+boxplot(metabolites,
+  main = paste(toupper(ds), 'Data with log-transform'),
+  col = as.factor(metadata['experimental group',]),
+  xlab = "Experimental Groups",
+  xaxt = 'n'
+)
+mtext(text= unique(as.factor(metadata['experimental group',])),
+  side = 1,
+  outer = FALSE,
+  at = seq(2, 21, by = 3),
+  line = 1
+  )
+par(new=TRUE)
+stripchart(metabolites,
+  method='jitter',
+  jitter=.2,
+  vertical=TRUE,
+  add=T,
+  pch=16,
+  cex = 0.6,
+  col = 'grey'
+  )
+plot.new()
+legend('bottomright', 
+  legend = unique(as.factor(metadata['experimental group',])), 
+  col = unique(as.factor(metadata['experimental group',])), 
+  pch = 19,
+  cex=0.4
+  )
 ```
 This tells me that we need to use the log transform. Visually, only SWP seems to be radically different.
 
