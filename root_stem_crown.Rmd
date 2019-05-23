@@ -24,7 +24,7 @@ II. Nomenclature:
 A. Crown root parts: 
   CRP: Crown root peel. 
   CNP: Crown root with ‘no’ peel
-  CWO: Whole crown root
+  CWP: Whole crown root
 B. Lateral root parts: 
   LRP: whole lateral root
 C. Stem parts: 
@@ -126,7 +126,7 @@ l = gl(7, 3,
 myColors = c(rep("red",3),rep("blue",3),rep("green",3),rep('yellow', 3), rep('lightblue',3), rep('violet',3), rep('grey', 3))
 
 boxplot(metabolites,
-  main = 'GC Data with log-transform',
+  main = paste(toupper(ds), 'Data with log-transform'),
   col=l
 )
 par(new=TRUE)
@@ -137,7 +137,9 @@ stripchart(metabolites,
   add=T,
   pch=16,
   cex = 0.6,
-  col = 'grey')
+  col = 'grey',
+  xlab = metadata['experimental group',]
+  )
 plot.new()
 legend('bottomright', legend = unique(l), col = unique(l), pch = 1, cex=0.4)
 ```
@@ -291,8 +293,6 @@ Compare each metabolite to each metadata.
     Box plots for each metabolite and each metadata
 ```{r}
 if(!require(nlme)){install.packages("nlme")}
-if(!require(multcomp)){install.packages("multcomp")}
-library("multcomp")
 library("nlme")
 
 plantPartPostHoc <<- data.frame(
@@ -302,7 +302,32 @@ plantPartPostHoc <<- data.frame(
   slr = numeric(0)
 )
 colnames(plantPartPostHoc) = c('metabolites', 'lateral_root - crown_root', 'stem - lateral_root', 'stem - crown_root')
-experimentalGroup = list()
+
+expGroupPostHoc <<- data.frame(
+  metaboliteName = character(0),
+  c1 = character(0),
+  c2 = character(0),
+  c3 = character(0),
+  c4 = character(0),
+  c5 = character(0),
+  c6 = character(0),
+  c7 = character(0),
+  c8 = character(0),
+  c9 = character(0),
+  c10 = character(0),
+  c11 = character(0),
+  c12 = character(0),
+  c13 = character(0),
+  c14 = character(0),
+  c15 = character(0),
+  c16 = character(0),
+  c17 = character(0),
+  c18 = character(0),
+  c19 = character(0),
+  c20 = character(0),
+  c21 = character(0)
+)
+colnames(expGroupPostHoc) = c('metabolite',"CRP - CNP","CWP - CNP","LR - CNP","SNP - CNP","SP - CNP","SWP - CNP","CWP - CRP","LR - CRP","SNP - CRP","SP - CRP","SWP - CRP","LR - CWP","SNP - CWP","SP - CWP","SWP - CWP","SNP - LR","SP - LR", "SWP - LR","SP - SNP","SWP - SNP","SWP - SP")
 
 metaboliteNames = c()
 metadataCatagories = c()
@@ -312,9 +337,26 @@ pvals = c()
 failedLme <<- data.frame(#'<<-' gives global scope
   metaboliteName = character(0), 
   metaboliteRowNum = numeric(0), 
-  metadataName = character(0),  
+  metadataName = character(0),
   metadataRowNum = numeric(0)
   )
+
+tukeysTest = function(aLme){
+  if(!require(multcomp)){install.packages("multcomp")}
+  library("multcomp")
+  posthoc = glht(myLme,
+    linfct = mcp(metad="Tukey")
+  )
+  mcs = summary(posthoc,
+    test=adjusted("single-step")
+  )
+  myRow = as.list(mcs$test$pvalues)
+  names(myRow) = names(mcs$test$tstat)
+  myMetabo = row.names(metabolites)[i1]
+  print(myMetabo)
+  names(myMetabo) = 'metabolite'
+  return(c(myMetabo, myRow))
+}
 
 for (i1 in 1:nrow(metabolites)){
   #print(paste('i1:',i1))
@@ -337,25 +379,15 @@ for (i1 in 1:nrow(metabolites)){
         myPval = myAnova$"p-value"[2]
         if(myPval < 0.05){
           if(row.names(metadata)[i2] == 'plant part'){
-            #print('plant part')
-            posthoc = glht(myLme,
-              linfct = mcp(metad="Tukey")
-            )
-            mcs = summary(posthoc,
-              test=adjusted("single-step")
-            )
-            myRow = as.list(mcs$test$pvalues)
-            names(myRow) = names(mcs$test$tstat)
-            
-            myMetabo = row.names(metabolites)[i1]
-            names(myMetabo) = 'metabolite'
-            
-            myRow = c(myMetabo, myRow)
-            print(myRow)
-            plantPartPostHoc <<- rbind(plantPartPostHoc, data.frame(myRow))
+            print('plant part')
+            tukeyT = tukeysTest(myLm)
+            plantPartPostHoc <<- rbind(plantPartPostHoc, data.frame(tukeyT))
           }
           if(row.names(metadata)[i2] == 'experimental group'){
-            #print('experimental group')
+            print('experimental group')
+            tukeyT = tukeysTest(myLm)
+            print(tukeyT)
+            expGroupPostHoc <<- rbind(expGroupPostHoc, data.frame(tukeyT))
           }
         }
         metaboliteNames = c(metaboliteNames, row.names(metabolites)[i1])
@@ -366,8 +398,9 @@ for (i1 in 1:nrow(metabolites)){
           #metaboliteName, metaboliteRowNum, metadataName, metadataRowNum
           myRow = list(row.names(metabolites)[i1], i1, row.names(metadata)[i2], i2)
           names(myRow) = c('metaboliteName', 'metaboliteRowNum', 'metadataName', 'metadataRowNum')
+          print(metabo)
           failedLme <<- rbind(failedLme, data.frame(myRow))
-          print('an error is thrown')
+          #print('an error is thrown')
           message(cond)
           # Choose a return value in case of error
           # return(NA)
@@ -376,9 +409,9 @@ for (i1 in 1:nrow(metabolites)){
           print('a warning is thrown')
           myRow = list(row.names(metabolites)[i1], i1, row.names(metadata)[i2], i2)
           names(myRow) = c('metaboliteName', 'metaboliteRowNum', 'metadataName', 'metadataRowNum')
-          print(failedLme)
+          #print(names(myRow))
           failedLme = rbind(failedLme, data.frame(myRow))
-          print('failedLme warning')
+          #print('failedLme warning')
           message(cond)
           # Choose a return value in case of warning
           #return(NULL)
@@ -398,6 +431,8 @@ dFrame <- dFrame [order(dFrame$pvalAdj),]
 write.table(dFrame, file=paste(ds, "MetaVsMetabolitesLme.txt", sep = ''), row.names=FALSE, sep="\t")
 
 write.table(plantPartPostHoc, file=paste(ds, "PlantPartsPostHocLme.txt", sep = ''), row.names=FALSE, sep="\t")
+
+write.table(expGroupPartPostHoc, file=paste(ds, "ExpGroupPostHocLme.txt", sep = ''), row.names=FALSE, sep="\t")
 
 write.table(failedLme, file=paste(ds, "MetaVsMetabolitesFailsLme.txt", sep = ''), row.names=FALSE, sep="\t")
 
@@ -432,79 +467,24 @@ mcs
 ```
 
 
-Compare each metabolite to each metadata.
-  Expected output:
-    Table: 
-      Columns: adjusted pval (sorted), metadata name, metabolite name
+Scratch space for making the columns of expGroupPostHoc
 ```{r}
-metabos = c()
-metaNames = c()
-metaPval = c()
-for (i1 in 1:nrow(metabolites)){
-  for (i2 in 1:nrow(meta_data)){
-    myLm = lm( unlist(metabolites[i1,]) ~ as.factor(as.character(meta_data[i2,])))
-    metabos = c(metabos, row.names(metabolites)[i1])
-    metaNames = c(metaNames, row.names(meta_data)[i2])
-    metaPval =  c(metaPval, anova(myLm)$"Pr(>F)"[1])
-  }
-}
-metaPvalAdj = p.adjust(metaPval, method = "BH")
-dFrame <- data.frame(metaPvalAdj,metaNames,metabos)
-dFrame <- dFrame [order(dFrame$metaPvalAdj),]
-write.table(dFrame, file="gcMetaVsMetabolites.txt", row.names=FALSE, sep="\t")
-pdf("gcMetaVsMetabolites.pdf")
-#par(mfrow=c(2,2))
-for( i in 1:nrow(dFrame)){
-	aTitle <- paste(  dFrame$metabos[i], "vs",  dFrame$metaNames[i], "\nAdjusted Pvalue=",
-	round(dFrame$metaPvalAdj[i], digits = 4))
-	
-	plot( as.factor(as.character(meta_data[as.character(dFrame$metaNames[i]),])), 
-	  unlist(metabolites[as.character(dFrame$metabos[i]),]),
-	  main = aTitle,
-	  xlab = as.character(dFrame$metaNames[i]), 
-	  ylab = as.character(dFrame$metabos[i])
-	  )
-}
-dev.off()
+cols = '"CRP - CNP" "CWP - CNP" "LR - CNP"  "SNP - CNP" "SP - CNP"  "SWP - CNP" "CWP - CRP" "LR - CRP"  "SNP - CRP" "SP - CRP"  "SWP - CRP" "LR - CWP"
+ "SNP - CWP" "SP - CWP"  "SWP - CWP" "SNP - LR"  "SP - LR"   "SWP - LR"
+ "SP - SNP"  "SWP - SNP" "SWP - SP"'
+cols = gsub('\n', '', cols)
+cols = gsub('  ', '","', cols)
+cols = gsub('" "', '","', cols)
+cols = gsub("\\\\", '', cols, fixed=TRUE)
+cols
+#cols = strsplit(cols, '" "')
+cols
+# cols = strsplit(cols, '"  "')
+# cols
+
+length(c('metabolites',"CRP - CNP","CWP - CNP","LR - CNP","SNP - CNP","SP - CNP","SWP - CNP","CWP - CRP","LR - CRP","SNP - CRP","SP - CRP","SWP - CRP","LR - CWP","SNP - CWP","SP - CWP","SWP - CWP","SNP - LR","SP - LR", "SWP - LR","SP - SNP","SWP - SNP","SWP - SP"))
 ```
 
-```{r}
-pdf("gcNaRowsDroppedPcas.pdf")
-palette("default")
-plot(myPcaNa$PC1, myPcaNa$PC2,
-  xlab = 'PCA1, 66% of Variance',
-  ylab = 'PCA2, 17% of Variance',
-  main = 'PCA with NA omitted, log tranformed',
-  col=l
-)
-legend('topright', legend = unique(l), 
-  col = unique(l), 
-  pch = 1, 
-  cex=0.6
-)
-dev.off()
-```
-```{r}
-function(){
-  
-}
-```
-
-
-```{r}
-for (i in 1:nrow(metadata)){
-  print(i)
-  plot(myPcaNa$PC1, myPcaNa$PC2,
-    col=as.factor(metadata[i,]),
-    main = row.names(metadata)[i]
-  )
-  legend('topright', legend = unique(as.factor(metadata[i,])),
-    col = unique(as.factor(unique(metadata[i,]))),
-    pch = 1,
-    cex=0.6
-    )
-}
-```
 
 Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
 
