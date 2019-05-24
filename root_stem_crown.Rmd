@@ -191,10 +191,9 @@ PCA1 and PCA2 account for 84% cummaltively.
 PCA1 and PCA2
 ```{r}
 for (i in 1:nrow(metadata)){
-  print(i)
   plot(myPCA$PC1, myPCA$PC2,
     col=as.factor(metadata[i,]),
-    main = paste('Catagory: ', row.names(metadata)[i]),
+    main = paste(ds, 'dataset\n','Catagory: ', row.names(metadata)[i]),
     pch = 19,
     cex = 1.3
   )
@@ -213,7 +212,7 @@ for (i in 1:nrow(metadata)){
     col=as.factor(metadata[i,]),
     pch = 19,
     cex = 1.3,
-    main = paste('Catagory: ', row.names(metadata)[i])
+    main = paste(ds, 'dataset\n', 'Catagory: ', row.names(metadata)[i])
   )
   legend('bottomright', legend = unique(as.factor(metadata[i,])),
     col = unique(as.factor(unique(metadata[i,]))),
@@ -227,12 +226,12 @@ dev.off()
 PCA1 and PCA3
 ```{r}
 for (i in 1:nrow(metadata)){
-  print(i)
   plot(myPCA$PC1, myPCA$PC3,
     xlab = 'PCA1, 66% of Variance',
     ylab = 'PCA3, 3% of Variance',
     col=as.factor(metadata[i,]),
-    main = row.names(metadata)[i],
+    main = paste(ds, 'dataset\n', row.names(metadata)[i]),
+    sub = paste(ds, 'dataset'),
     pch = 19,
     cex = 1.3
     )
@@ -246,10 +245,9 @@ for (i in 1:nrow(metadata)){
 PCA2 and PCA3
 ```{r}
 for (i in 1:nrow(metadata)){
-  print(i)
   plot(myPCA$PC2, myPCA$PC3,
     col=as.factor(metadata[i,]),
-    main = row.names(metadata)[i],
+    main = paste(ds, 'dataset\n', row.names(metadata)[i]),
     xlab = 'PCA2, 17% of Variance',
     ylab = 'PCA3, 6% of Variance',
     pch = 19,
