@@ -74,6 +74,10 @@ File 3: NCAT155-Positive mode- LC-MS-SORTED- Roots
     So I have discarded them in the sheet “For PCA – Stem and Roots”.  
 3. For compounds with two adducts, the adduct rows with lower areas are deleted (will check with you before deletion)
 
+Bioactive compounds:
+  Kavain
+  Dihydromethysticin
+  Desmethoxyyangonin
 
 First load the data:
 ```{r}
@@ -318,165 +322,103 @@ Compare each metabolite to each metadata.
           Metabolite | lateral_root - crown_root | stem - crown_root | stem - lateral_root
     Box plots for each metabolite and each metadata
 ```{r}
-if(!require(nlme)){install.packages("nlme")}
-library("nlme")
-
-plantPartPostHoc <<- data.frame(
-  metaboliteName = character(0),
-  lrcr = numeric(0),
-  scr = numeric(0),
-  slr = numeric(0)
-)
-colnames(plantPartPostHoc) = c('metabolites', 'lateral_root - crown_root', 'stem - lateral_root', 'stem - crown_root')
-
-expGroupPostHoc <<- data.frame(
-  metaboliteName = character(0),
-  c1 = character(0),
-  c2 = character(0),
-  c3 = character(0),
-  c4 = character(0),
-  c5 = character(0),
-  c6 = character(0),
-  c7 = character(0),
-  c8 = character(0),
-  c9 = character(0),
-  c10 = character(0),
-  c11 = character(0),
-  c12 = character(0),
-  c13 = character(0),
-  c14 = character(0),
-  c15 = character(0),
-  c16 = character(0),
-  c17 = character(0),
-  c18 = character(0),
-  c19 = character(0),
-  c20 = character(0),
-  c21 = character(0)
-)
-colnames(expGroupPostHoc) = c('metabolite',"CRP - CNP","CWP - CNP","LR - CNP","SNP - CNP","SP - CNP","SWP - CNP","CWP - CRP","LR - CRP","SNP - CRP","SP - CRP","SWP - CRP","LR - CWP","SNP - CWP","SP - CWP","SWP - CWP","SNP - LR","SP - LR", "SWP - LR","SP - SNP","SWP - SNP","SWP - SP")
-
-metaboliteNames = c()
-metadataCatagories = c()
-pvals = c()
-
-#vessel to hold the failures for future reference
-failedLme <<- data.frame(#'<<-' gives global scope
-  metaboliteName = character(0), 
-  metaboliteRowNum = numeric(0), 
-  metadataName = character(0),
-  metadataRowNum = numeric(0)
-  )
-
-tukeysTest = function(aLme){
-  if(!require(multcomp)){install.packages("multcomp")}
-  library("multcomp")
-  posthoc = glht(myLme,
-    linfct = mcp(metad="Tukey")
-  )
-  mcs = summary(posthoc,
-    test=adjusted("single-step")
-  )
-  myRow = as.list(mcs$test$pvalues)
-  names(myRow) = names(mcs$test$tstat)
-  myMetabo = row.names(metabolites)[i1]
-  print(myMetabo)
-  names(myMetabo) = 'metabolite'
-  return(c(myMetabo, myRow))
-}
-
-for (i1 in 1:nrow(metabolites)){
-  #print(paste('i1:',i1))
-  for (i2 in 1:nrow(metadata)){
-    #print(paste('i2:',i2))
-    if (row.names(metadata)[i2] != 'plant number'){
-      tryCatch(
-        {
-        metabo = unlist(metabolites[i1,])
-        metad = as.factor(unlist(metadata[i2,]))
-        pn = unlist(metadata['plant number',])
-        myD = data.frame(metabo, metad, pn)
-        myLme = lme(metabo ~ metad, 
-          method= "REML", 
-          random = ~1 | pn, 
-          na.action = 'na.omit',
-          data = myD
-          )
-        myAnova = anova(myLme)
-        myPval = myAnova$"p-value"[2]
-        # if(myPval < 0.05){
-        #   if(row.names(metadata)[i2] == 'plant part'){
-        #     print('plant part')
-        #     tukeyT = tukeysTest(myLm)
-        #     plantPartPostHoc <<- rbind(plantPartPostHoc, data.frame(tukeyT))
-        #   }
-        #   if(row.names(metadata)[i2] == 'experimental group'){
-        #     print('experimental group')
-        #     tukeyT = tukeysTest(myLm)
-        #     print(tukeyT)
-        #     expGroupPostHoc <<- rbind(expGroupPostHoc, data.frame(tukeyT))
-        #   }
-        # }
-        metaboliteNames = c(metaboliteNames, row.names(metabolites)[i1])
-        metadataCatagories = c(metadataCatagories, row.names(metadata)[i2])
-        pvals =  c(pvals, myPval)
-        },
-        error=function(cond) {
-          #metaboliteName, metaboliteRowNum, metadataName, metadataRowNum
-          myRow = list(row.names(metabolites)[i1], i1, row.names(metadata)[i2], i2)
-          names(myRow) = c('metaboliteName', 'metaboliteRowNum', 'metadataName', 'metadataRowNum')
-         # print(metabo)
-          failedLme <<- rbind(failedLme, data.frame(myRow))
-          #print('an error is thrown')
-          message(cond)
-          # Choose a return value in case of error
-          # return(NA)
-        },
-        warning=function(cond) {
-          print('a warning is thrown')
-          myRow = list(row.names(metabolites)[i1], i1, row.names(metadata)[i2], i2)
-          names(myRow) = c('metaboliteName', 'metaboliteRowNum', 'metadataName', 'metadataRowNum')
-          #print(names(myRow))
-          failedLme = rbind(failedLme, data.frame(myRow))
-          #print('failedLme warning')
-          message(cond)
-          # Choose a return value in case of warning
-          #return(NULL)
-        }
-      )
+lmeMetadata = function(testingData, label){
+  if(!require(nlme)){install.packages("nlme")}
+  library("nlme")
+  
+  metaboliteNames = c()
+  metadataCatagories = c()
+  pvals = c()
+  
+  #vessel to hold the failures for future reference
+  failedLme <<- data.frame(#'<<-' gives global scope
+    metaboliteName = character(0), 
+    metaboliteRowNum = numeric(0), 
+    metadataName = character(0),
+    metadataRowNum = numeric(0)
+    )
+  
+  for (i1 in 1:nrow(testingData)){
+    #print(paste('i1:',i1))
+    for (i2 in 1:nrow(metadata)){
+      #print(paste('i2:',i2))
+      if (row.names(metadata)[i2] != 'plant number'){
+        tryCatch(
+          {
+          metabo = unlist(testingData[i1,])
+          metad = as.factor(unlist(metadata[i2,]))
+          pn = unlist(metadata['plant number',])
+          myD = data.frame(metabo, metad, pn)
+          myLme = lme(metabo ~ metad, 
+            method= "REML", 
+            random = ~1 | pn, 
+            na.action = 'na.omit',
+            data = myD
+            )
+          myAnova = anova(myLme)
+          myPval = myAnova$"p-value"[2]
+          metaboliteNames = c(metaboliteNames, row.names(testingData)[i1])
+          metadataCatagories = c(metadataCatagories, row.names(metadata)[i2])
+          pvals =  c(pvals, myPval)
+          },
+          error=function(cond) {
+            #metaboliteName, metaboliteRowNum, metadataName, metadataRowNum
+            myRow = list(row.names(testingData)[i1], i1, row.names(metadata)[i2], i2)
+            names(myRow) = c('metaboliteName', 'metaboliteRowNum', 'metadataName', 'metadataRowNum')
+           # print(metabo)
+            failedLme <<- rbind(failedLme, data.frame(myRow))
+            #print('an error is thrown')
+            message(cond)
+            # Choose a return value in case of error
+            # return(NA)
+          },
+          warning=function(cond) {
+            print('a warning is thrown')
+            myRow = list(row.names(testingData)[i1], i1, row.names(metadata)[i2], i2)
+            names(myRow) = c('metaboliteName', 'metaboliteRowNum', 'metadataName', 'metadataRowNum')
+            #print(names(myRow))
+            failedLme = rbind(failedLme, data.frame(myRow))
+            #print('failedLme warning')
+            message(cond)
+            # Choose a return value in case of warning
+            #return(NULL)
+          }
+        )
+      }
     }
   }
+  
+  pvalAdj = p.adjust(pvals, method = "BH")
+  
+  dFrame <- data.frame(pvals,pvalAdj,metaboliteNames,metadataCatagories)
+  dFrame <- dFrame [order(dFrame$pvalAdj),]
+  
+  
+  write.table(dFrame, file=paste(ds, "MetaVs", label, ".txt", sep = ''), row.names=FALSE, sep="\t")
+  
+  write.table(failedLme, file=paste(ds, "MetaVs", label, ".txt", sep = ''), row.names=FALSE, sep="\t")
+  
+  pdf(paste(ds, "MetaVs", label, ".pdf", sep=""))
+  #par(mfrow=c(2,2))
+  
+  for( i in 1:nrow(dFrame)){
+  	aTitle <- paste(  dFrame$metaboliteNames[i], "vs",  dFrame$metadataCatagories[i], "\nAdjusted Pvalue=", dFrame$pvalAdj[i])
+  
+  	plot( as.factor(as.character(metadata[as.character(dFrame$metadataCatagories[i]),])),
+  	  unlist(testingData[as.character(dFrame$metaboliteNames[i]),]),
+  	  main = aTitle,
+  	  xlab = as.character(dFrame$metadataCatagories[i]),
+  	  ylab = as.character(dFrame$metaboliteNames[i])
+  	  )
+  }
+  dev.off()
+  print('successfull run of lmeMetadata')
+}#end function
+```
 
-}
 
-pvalAdj = p.adjust(pvals, method = "BH")
-
-dFrame <- data.frame(pvals,pvalAdj,metaboliteNames,metadataCatagories)
-dFrame <- dFrame [order(dFrame$pvalAdj),]
-
-
-write.table(dFrame, file=paste(ds, "MetaVsMetabolitesLme.txt", sep = ''), row.names=FALSE, sep="\t")
-
-#write.table(plantPartPostHoc, file=paste(ds, "PlantPartsPostHocLme.txt", sep = ''), row.names=FALSE, sep="\t")
-
-#write.table(expGroupPartPostHoc, file=paste(ds, "ExpGroupPostHocLme.txt", sep = ''), row.names=FALSE, sep="\t")
-
-write.table(failedLme, file=paste(ds, "MetaVsMetabolitesFailsLme.txt", sep = ''), row.names=FALSE, sep="\t")
-
-pdf(paste(ds, "MetaVsMetabolitesLme.pdf", sep=""))
-#par(mfrow=c(2,2))
-
-for( i in 1:nrow(dFrame)){
-	aTitle <- paste(  dFrame$metaboliteNames[i], "vs",  dFrame$metadataCatagories[i], "\nAdjusted Pvalue=", dFrame$pvalAdj[i])
-
-	plot( as.factor(as.character(metadata[as.character(dFrame$metadataCatagories[i]),])),
-	  unlist(metabolites[as.character(dFrame$metaboliteNames[i]),]),
-	  main = aTitle,
-	  xlab = as.character(dFrame$metadataCatagories[i]),
-	  ylab = as.character(dFrame$metaboliteNames[i])
-	  )
-}
-
-dev.off()
+```{r}
+lmeMetadata(metabolites, 'Metabolites')
 ```
 
 Testing MDS verse all metadata catagories
