@@ -218,7 +218,7 @@ for (i in 1:nrow(metadata)){
     cex = 1.3,
     main = paste(ds, 'dataset\n', 'Catagory: ', row.names(metadata)[i])
   )
-  legend('bottomright', legend = unique(as.factor(metadata[i,])),
+  legend('topleft', legend = unique(as.factor(metadata[i,])),
     col = unique(as.factor(unique(metadata[i,]))),
     pch = 1,
     cex=0.6
@@ -295,11 +295,11 @@ pdf(paste(ds,"MetaVsPcasLinearMod.pdf", sep = ""))
 
 for( i in 1:nrow(dFrame)){
 	aTitle <- paste('PCA', dFrame$pcas[i], "vs",  dFrame$metaNames[i], "\nAdjusted Pvalue=", dFrame$metaPvalAdj[i])
-	
-	plot( as.factor(as.character(metadata[as.character(dFrame$metaNames[i]),])), 
+
+	plot( as.factor(as.character(metadata[as.character(dFrame$metaNames[i]),])),
 	  myPCA[,dFrame$pcas[i]],
 	  main = aTitle,
-	  xlab = as.character(dFrame$metaNames[i]), 
+	  xlab = as.character(dFrame$metaNames[i]),
 	  ylab = paste('PCA', as.character(dFrame$pcas[i]))
 	  )
 }
@@ -396,7 +396,7 @@ lmeMetadata = function(testingData, label){
   
   write.table(dFrame, file=paste(ds, "MetaVs", label, ".txt", sep = ''), row.names=FALSE, sep="\t")
   
-  write.table(failedLme, file=paste(ds, "MetaVs", label, ".txt", sep = ''), row.names=FALSE, sep="\t")
+  write.table(failedLme, file=paste(ds, "FailedMetaVs", label, ".txt", sep = ''), row.names=FALSE, sep="\t")
   
   pdf(paste(ds, "MetaVs", label, ".pdf", sep=""))
   #par(mfrow=c(2,2))
@@ -420,6 +420,11 @@ lmeMetadata = function(testingData, label){
 ```{r}
 lmeMetadata(metabolites, 'Metabolites')
 ```
+
+```{r}
+lmeMetadata(t(myPCA), 'PCA')
+```
+
 
 Testing MDS verse all metadata catagories
 ```{r}
