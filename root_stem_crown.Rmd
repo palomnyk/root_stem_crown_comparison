@@ -312,7 +312,7 @@ Compare each metabolite to each metadata.
       Names and rows of metadata and metabolites for failed attempts,
     Table3:
       Posthoc pvalues for 'plant part'
-    Table4 and Table5:
+    Table4 and Table5: <- this turned out too hard for the model
       Post hoc pvalues for 'experimental group' and 'plant part'
         Table5 Columns:
           Metabolite | lateral_root - crown_root | stem - crown_root | stem - lateral_root
@@ -403,19 +403,19 @@ for (i1 in 1:nrow(metabolites)){
           )
         myAnova = anova(myLme)
         myPval = myAnova$"p-value"[2]
-        if(myPval < 0.05){
-          if(row.names(metadata)[i2] == 'plant part'){
-            print('plant part')
-            tukeyT = tukeysTest(myLm)
-            plantPartPostHoc <<- rbind(plantPartPostHoc, data.frame(tukeyT))
-          }
-          if(row.names(metadata)[i2] == 'experimental group'){
-            print('experimental group')
-            tukeyT = tukeysTest(myLm)
-            print(tukeyT)
-            expGroupPostHoc <<- rbind(expGroupPostHoc, data.frame(tukeyT))
-          }
-        }
+        # if(myPval < 0.05){
+        #   if(row.names(metadata)[i2] == 'plant part'){
+        #     print('plant part')
+        #     tukeyT = tukeysTest(myLm)
+        #     plantPartPostHoc <<- rbind(plantPartPostHoc, data.frame(tukeyT))
+        #   }
+        #   if(row.names(metadata)[i2] == 'experimental group'){
+        #     print('experimental group')
+        #     tukeyT = tukeysTest(myLm)
+        #     print(tukeyT)
+        #     expGroupPostHoc <<- rbind(expGroupPostHoc, data.frame(tukeyT))
+        #   }
+        # }
         metaboliteNames = c(metaboliteNames, row.names(metabolites)[i1])
         metadataCatagories = c(metadataCatagories, row.names(metadata)[i2])
         pvals =  c(pvals, myPval)
@@ -424,7 +424,7 @@ for (i1 in 1:nrow(metabolites)){
           #metaboliteName, metaboliteRowNum, metadataName, metadataRowNum
           myRow = list(row.names(metabolites)[i1], i1, row.names(metadata)[i2], i2)
           names(myRow) = c('metaboliteName', 'metaboliteRowNum', 'metadataName', 'metadataRowNum')
-          print(metabo)
+         # print(metabo)
           failedLme <<- rbind(failedLme, data.frame(myRow))
           #print('an error is thrown')
           message(cond)
@@ -456,9 +456,9 @@ dFrame <- dFrame [order(dFrame$pvalAdj),]
 
 write.table(dFrame, file=paste(ds, "MetaVsMetabolitesLme.txt", sep = ''), row.names=FALSE, sep="\t")
 
-write.table(plantPartPostHoc, file=paste(ds, "PlantPartsPostHocLme.txt", sep = ''), row.names=FALSE, sep="\t")
+#write.table(plantPartPostHoc, file=paste(ds, "PlantPartsPostHocLme.txt", sep = ''), row.names=FALSE, sep="\t")
 
-write.table(expGroupPartPostHoc, file=paste(ds, "ExpGroupPostHocLme.txt", sep = ''), row.names=FALSE, sep="\t")
+#write.table(expGroupPartPostHoc, file=paste(ds, "ExpGroupPostHocLme.txt", sep = ''), row.names=FALSE, sep="\t")
 
 write.table(failedLme, file=paste(ds, "MetaVsMetabolitesFailsLme.txt", sep = ''), row.names=FALSE, sep="\t")
 
@@ -477,41 +477,14 @@ for( i in 1:nrow(dFrame)){
 }
 
 dev.off()
-
 ```
+
+Testing MDS verse all metadata catagories
 ```{r}
-if(!require(multcomp)){install.packages("multcomp")}
-require(multcomp)
+for(i1 in ){
+  
+}
 
-posthoc = glht(myLme,
-  linfct = mcp(metad="Tukey"))
-
-mcs = summary(posthoc,
-  test=adjusted("single-step"))
-
-mcs
 ```
 
 
-Scratch space for making the columns of expGroupPostHoc
-```{r}
-cols = '"CRP - CNP" "CWP - CNP" "LR - CNP"  "SNP - CNP" "SP - CNP"  "SWP - CNP" "CWP - CRP" "LR - CRP"  "SNP - CRP" "SP - CRP"  "SWP - CRP" "LR - CWP"
- "SNP - CWP" "SP - CWP"  "SWP - CWP" "SNP - LR"  "SP - LR"   "SWP - LR"
- "SP - SNP"  "SWP - SNP" "SWP - SP"'
-cols = gsub('\n', '', cols)
-cols = gsub('  ', '","', cols)
-cols = gsub('" "', '","', cols)
-cols = gsub("\\\\", '', cols, fixed=TRUE)
-cols
-#cols = strsplit(cols, '" "')
-cols
-# cols = strsplit(cols, '"  "')
-# cols
-
-length(c('metabolites',"CRP - CNP","CWP - CNP","LR - CNP","SNP - CNP","SP - CNP","SWP - CNP","CWP - CRP","LR - CRP","SNP - CRP","SP - CRP","SWP - CRP","LR - CWP","SNP - CWP","SP - CWP","SWP - CWP","SNP - LR","SP - LR", "SWP - LR","SP - SNP","SWP - SNP","SWP - SP"))
-```
-
-
-Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
-
-When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file).
