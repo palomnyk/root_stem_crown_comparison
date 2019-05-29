@@ -320,6 +320,12 @@ lmMetadata = function(testingData, label){
   }
   
   dev.off()
+  newFrame = subset(dFrame, pcas <= 3 )
+  write.table(newFrame, 
+    file=paste(ds, "MetaVs",label, "LinearModTop3Pca.txt", sep = ''),
+    row.names=FALSE, 
+    sep="\t"
+  )
   print('lmMetadata complete')
 }#end of lmMetadata
 ```
@@ -327,17 +333,6 @@ lmMetadata = function(testingData, label){
 
 ```{r}
 lmMetadata(t(myPCA), 'Pca')
-```
-
-Follow-up to previous block:
-  pull just first 3 PCAs
-```{r}
-newFrame = subset(dFrame, pcas <= 3 )
-write.table(newFrame, 
-  file=paste(ds, "MetaVsPCAsLinearModTop3Pca.txt", sep = ''),
-  row.names=FALSE, 
-  sep="\t"
-)
 ```
 
 
@@ -513,98 +508,4 @@ hist(pValues,
   main = 'Pairwise t-tests'
   )
 ```
-
-```{r}
-lmeMetadata = function(testingData, label){
-  if(!require(nlme)){install.packages("nlme")}
-  library("nlme")
-  
-  metaboliteNames = c()
-  metadataCatagories = c()
-  pvals = c()
-  
-  for (i1 in 1:nrow(testingData)){
-    #print(paste('i1:',i1))
-    for (i2 in 1:nrow(metadata)){
-      #print(paste('i2:',i2))
-          metabo = unlist(testingData[i1,])
-          metad = as.factor(unlist(metadata[i2,]))
-          pn = unlist(metadata['plant number',])
-          myD = data.frame(metabo, metad, pn)
-          myLme = lme(metabo ~ metad, 
-            method= "REML", 
-            random = ~1 | pn, 
-            na.action = 'na.omit',
-            data = myD
-            )
-          myAnova = anova(myLme)
-          myPval = myAnova$"p-value"[2]
-          metaboliteNames = c(metaboliteNames, row.names(testingData)[i1])
-          metadataCatagories = c(metadataCatagories, row.names(metadata)[i2])
-          pvals =  c(pvals, myPval)
-          },
-          error=function(cond) {
-            #metaboliteName, metaboliteRowNum, metadataName, metadataRowNum
-            myRow = list(row.names(testingData)[i1], i1, row.names(metadata)[i2], i2)
-            names(myRow) = c('metaboliteName', 'metaboliteRowNum', 'metadataName', 'metadataRowNum')
-           # print(metabo)
-            failedLme <<- rbind(failedLme, data.frame(myRow))
-            #print('an error is thrown')
-            message(cond)
-            # Choose a return value in case of error
-            # return(NA)
-          },
-          warning=function(cond) {
-            print('a warning is thrown')
-            myRow = list(row.names(testingData)[i1], i1, row.names(metadata)[i2], i2)
-            names(myRow) = c('metaboliteName', 'metaboliteRowNum', 'metadataName', 'metadataRowNum')
-            #print(names(myRow))
-            failedLme = rbind(failedLme, data.frame(myRow))
-            #print('failedLme warning')
-            message(cond)
-            # Choose a return value in case of warning
-            #return(NULL)
-          }
-        )
-      }
-    }
-  }
-  
-  pvalAdj = p.adjust(pvals, method = "BH")
-  
-  dFrame <- data.frame(pvals,pvalAdj,metaboliteNames,metadataCatagories)
-  dFrame <- dFrame[order(dFrame$pvalAdj),]
-  
-  
-  write.table(dFrame, file=paste(ds, "MetaVs", label, ".txt", sep = ''), row.names=FALSE, sep="\t")
-  
-  write.table(failedLme, file=paste(ds, "FailedMetaVs", label, ".txt", sep = ''), row.names=FALSE, sep="\t")
-  
-  pdf(paste(ds, "HistogramMetaVs", label, ".pdf", sep=""))
-  hist(pvals, 
-    main = paste('Histogram of pvalues for ', label),
-    xlab = 'Uncorrected pvalues',
-    breaks = 50
-  )
-  dev.off()
-  
-  pdf(paste(ds, "MetaVs", label, ".pdf", sep=""))
-  #par(mfrow=c(2,2))
-  
-  for( i in 1:nrow(dFrame)){
-  	aTitle <- paste(  dFrame$metaboliteNames[i], "vs",  dFrame$metadataCatagories[i], "\nAdjusted Pvalue=", dFrame$pvalAdj[i])
-  
-  	plot( as.factor(as.character(metadata[as.character(dFrame$metadataCatagories[i]),])),
-  	  unlist(testingData[as.character(dFrame$metaboliteNames[i]),]),
-  	  main = aTitle,
-  	  xlab = as.character(dFrame$metadataCatagories[i]),
-  	  ylab = as.character(dFrame$metaboliteNames[i])
-  	  )
-  }
-  dev.off()
-  print('successfull run of lmeMetadata')
-}#end function
-```
-```
-
 
