@@ -278,10 +278,24 @@ lmMetadata = function(testingData, label){
   
   for (i1 in 1:nrow(testingData)){
     for (i2 in 1:nrow(metadata)){
-      myLm = lm( testingData[i1,] ~ as.factor(as.character(metadata[i2,])))
-      pcas = c(pcas, i1)
-      metaNames = c(metaNames, row.names(metadata)[i2])
-      metaPval =  c(metaPval, anova(myLm)$"Pr(>F)"[1])
+      tryCatch(
+       { 
+        myLm = lm( unlist(testingData[i1,]) ~ as.factor(as.character(metadata[i2,])))
+        pcas = c(pcas, i1)
+        metaNames = c(metaNames, row.names(metadata)[i2])
+        metaPval =  c(metaPval, anova(myLm)$"Pr(>F)"[1])
+        },
+        error=function(cond) {
+          print('an error is thrown')
+          message(cond)
+        },
+        warning=function(cond) {
+          print('a warning is thrown')
+          message(cond)
+          # Choose a return value in case of warning
+          #return(NULL)
+        }
+      )
     }
   }
   
@@ -312,8 +326,7 @@ lmMetadata = function(testingData, label){
 
 
 ```{r}
-myPCAt = t(myPCA)
-lmMetadata(myPCAt, 'Pca')
+lmMetadata(t(myPCA), 'Pca')
 ```
 
 Follow-up to previous block:
