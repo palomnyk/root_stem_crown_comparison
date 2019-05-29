@@ -266,13 +266,13 @@ for (i in 1:nrow(metadata)){
 ```
 
 
-Compare each PCA to each metadata catagory using lm and anova.
+Compare each PCA or metabolite to each metadata catagory using lm and anova.
 
 Expected output: Table, 
   columns: PCAs, metadata catagory, pvals
 ```{r}
 lmMetadata = function(testingData, label){
-  pcas = c()
+  index = c()
   metaNames = c()
   metaPval = c()
   
@@ -281,7 +281,7 @@ lmMetadata = function(testingData, label){
       tryCatch(
        { 
         myLm = lm( unlist(testingData[i1,]) ~ as.factor(as.character(metadata[i2,])))
-        pcas = c(pcas, i1)
+        index = c(index, i1)
         metaNames = c(metaNames, row.names(metadata)[i2])
         metaPval =  c(metaPval, anova(myLm)$"Pr(>F)"[1])
         },
@@ -300,7 +300,7 @@ lmMetadata = function(testingData, label){
   }
   
   metaPvalAdj = p.adjust(metaPval, method = "BH")
-  dFrame <- data.frame(metaPvalAdj,metaNames,pcas)
+  dFrame <- data.frame(metaPvalAdj,metaNames,index)
   dFrame <- dFrame [order(dFrame$metaPvalAdj),]
   
   write.table(dFrame, file=paste(ds, "MetaVs",label,"LinearMod.txt", sep = ''), row.names=FALSE, sep="\t")
@@ -309,18 +309,18 @@ lmMetadata = function(testingData, label){
   #par(mfrow=c(2,2))
   
   for( i in 1:nrow(dFrame)){
-  	aTitle <- paste(label, dFrame$pcas[i], "vs",  dFrame$metaNames[i], "\nAdjusted Pvalue=", dFrame$metaPvalAdj[i])
+  	aTitle <- paste(label, dFrame$index[i], "vs",  dFrame$metaNames[i], "\nAdjusted Pvalue=", dFrame$metaPvalAdj[i])
   
   	plot( as.factor(as.character(metadata[as.character(dFrame$metaNames[i]),])),
-  	  testingData[dFrame$pcas[i],],
+  	  testingData[dFrame$index[i],],
   	  main = aTitle,
   	  xlab = as.character(dFrame$metaNames[i]),
-  	  ylab = paste(label, as.character(dFrame$pcas[i]))
+  	  ylab = paste(label, as.character(dFrame$index[i]))
   	  )
   }
   
   dev.off()
-  newFrame = subset(dFrame, pcas <= 3 )
+  newFrame = subset(dFrame, index <= 3 )
   write.table(newFrame, 
     file=paste(ds, "MetaVs",label, "LinearModTop3Pca.txt", sep = ''),
     row.names=FALSE, 
@@ -427,19 +427,19 @@ lmeMetadata = function(testingData, label){
   dFrame <- dFrame[order(dFrame$pvalAdj),]
   
   
-  write.table(dFrame, file=paste(ds, "MetaVs", label, ".txt", sep = ''), row.names=FALSE, sep="\t")
+  write.table(dFrame, file=paste(ds, "MetaVs", label, "Lme.txt", sep = ''), row.names=FALSE, sep="\t")
   
-  write.table(failedLme, file=paste(ds, "FailedMetaVs", label, ".txt", sep = ''), row.names=FALSE, sep="\t")
+  write.table(failedLme, file=paste(ds, "FailedMetaVs", label, "Lme.txt", sep = ''), row.names=FALSE, sep="\t")
   
   pdf(paste(ds, "HistogramMetaVs", label, ".pdf", sep=""))
   hist(pvals, 
-    main = paste('Histogram of pvalues for ', label),
+    main = paste('Histogram of lme pvalues for ', label),
     xlab = 'Uncorrected pvalues',
     breaks = 50
   )
   dev.off()
   
-  pdf(paste(ds, "MetaVs", label, ".pdf", sep=""))
+  pdf(paste(ds, "MetaVs", label, "Lme.pdf", sep=""))
   #par(mfrow=c(2,2))
   
   for( i in 1:nrow(dFrame)){
