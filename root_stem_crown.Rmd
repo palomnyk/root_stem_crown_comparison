@@ -398,6 +398,14 @@ lmeMetadata = function(testingData, label){
   
   write.table(failedLme, file=paste(ds, "FailedMetaVs", label, ".txt", sep = ''), row.names=FALSE, sep="\t")
   
+  pdf(paste(ds, "HistogramMetaVs", label, ".pdf", sep=""))
+  hist(pvals, 
+    main = paste('Histogram of pvalues for ', label),
+    xlab = 'Uncorrected pvalues',
+    breaks = 50
+  )
+  dev.off()
+  
   pdf(paste(ds, "MetaVs", label, ".pdf", sep=""))
   #par(mfrow=c(2,2))
   
@@ -426,9 +434,50 @@ lmeMetadata(t(myPCA), 'PCA')
 ```
 
 
+Pairwise tests (code from Dr. Fodor https://github.com/afodor/metagenomicsTools/blob/master/src/scripts/aaronMetabolites/quickPairwise.txt)
+```{r}
+expGroups = unique(unlist(metadata['experimental group',]))
+numGroups = length(expGroups)
+iGroups <- vector()
+jGroup <- vector()
+index <- 1
+pValues <- vector()
+metabloliteName <- vector()
+for( m in 1:nrow(metabolites) )
+{	
+	for ( i in 1:(numGroups-1) ) 
+	  print(i)
+	{
+		iData <- metabolites[m, which(metadata['experimental group', ] == expGroups[i])]
+		
+		for( j in i:numGroups) 
+		{
+			jData <- metabolites[m,which(metadata['experimental group', ] == expGroups[j])]
+			if( sum(!is.na(iData)) >1 & sum(!is.na(jData)) >1   )
+			{
+				iGroups[index]  <- expGroups[i]
+				jGroup[index] <-expGroups[j]
+				pValues[index] <- t.test(iData, jData)$p.value
+				metabloliteName[index] <- row.names(metabolites)[m]
+				index = index + 1
+				print( paste(index, " " , metabloliteName, "\n"))
+			}
+		}
+	}
+}
+myFrame <-data.frame(metabloliteName,iGroups,jGroup, pValues)
+sum(p.adjust(pValues, method="BH") < .1)
+hist(pValues, 
+  breaks = 50,
+  xlab = 'Uncorrected pvalues',
+  main = 'Pairwise t-tests'
+  )
+```
+
+
 Testing MDS verse all metadata catagories
 ```{r}
-for(i1 in ){
+for(i1 in 1:nrow(myPCA)){
   
 }
 
