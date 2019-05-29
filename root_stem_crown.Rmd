@@ -276,9 +276,9 @@ lmMetadata = function(testingData, label){
   metaNames = c()
   metaPval = c()
   
-  for (i1 in 1:ncol(testingData)){
+  for (i1 in 1:nrow(testingData)){
     for (i2 in 1:nrow(metadata)){
-      myLm = lm( testingData[,i1] ~ as.factor(as.character(metadata[i2,])))
+      myLm = lm( testingData[i1,] ~ as.factor(as.character(metadata[i2,])))
       pcas = c(pcas, i1)
       metaNames = c(metaNames, row.names(metadata)[i2])
       metaPval =  c(metaPval, anova(myLm)$"Pr(>F)"[1])
@@ -298,7 +298,7 @@ lmMetadata = function(testingData, label){
   	aTitle <- paste(label, dFrame$pcas[i], "vs",  dFrame$metaNames[i], "\nAdjusted Pvalue=", dFrame$metaPvalAdj[i])
   
   	plot( as.factor(as.character(metadata[as.character(dFrame$metaNames[i]),])),
-  	  testingData[,dFrame$pcas[i]],
+  	  testingData[dFrame$pcas[i],],
   	  main = aTitle,
   	  xlab = as.character(dFrame$metaNames[i]),
   	  ylab = paste(label, as.character(dFrame$pcas[i]))
@@ -312,7 +312,8 @@ lmMetadata = function(testingData, label){
 
 
 ```{r}
-lmMetadata(myPCA, 'Pca')
+myPCAt = t(myPCA)
+lmMetadata(myPCAt, 'Pca')
 ```
 
 Follow-up to previous block:
@@ -326,6 +327,10 @@ write.table(newFrame,
 )
 ```
 
+
+```{r}
+lmMetadata(metabolites, 'Metabolites')
+```
 
 
 Compare each metabolite to each metadata.
@@ -505,21 +510,10 @@ lmeMetadata = function(testingData, label){
   metadataCatagories = c()
   pvals = c()
   
-  #vessel to hold the failures for future reference
-  failedLme <<- data.frame(#'<<-' gives global scope
-    metaboliteName = character(0), 
-    metaboliteRowNum = numeric(0), 
-    metadataName = character(0),
-    metadataRowNum = numeric(0)
-    )
-  
   for (i1 in 1:nrow(testingData)){
     #print(paste('i1:',i1))
     for (i2 in 1:nrow(metadata)){
       #print(paste('i2:',i2))
-      if (row.names(metadata)[i2] != 'plant number'){
-        tryCatch(
-          {
           metabo = unlist(testingData[i1,])
           metad = as.factor(unlist(metadata[i2,]))
           pn = unlist(metadata['plant number',])
