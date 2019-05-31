@@ -79,6 +79,11 @@ Bioactive compounds:
   Dihydromethysticin
   Desmethoxyyangonin
 
+Metadata categories for publication:
+  experimental group
+  plant part
+  plant number
+
 First load the data:
 ```{r}
 rm(list = ls()) #clear workspace
@@ -93,8 +98,6 @@ metadata = read.table(file.path('.','gc_data','meta_data.csv'),
   row.names = 1, 
   check.names = FALSE,
   stringsAsFactors=FALSE)
-
-#meta_data = read.csv(file.path('.','gc_data','metadata.csv'),row.names=1, stringsAsFactors=FALSE)
 
 #read in raw numeric data
 metabolites = read.table(file.path('.', 'gc_data','gc_data_numeric.csv'), 
@@ -175,7 +178,7 @@ legend('bottomright',
   cex=0.4
   )
 ```
-This tells me that we need to use the log transform. Visually, only SWP seems to be radically different.
+This tells me that we need to use the log transform.
 
 Next look at PCA.
 ```{r}
@@ -197,7 +200,7 @@ PCA1 and PCA2
 for (i in 1:nrow(metadata)){
   plot(myPCA$PC1, myPCA$PC2,
     col=as.factor(metadata[i,]),
-    main = paste(ds, 'dataset\n','Catagory: ', row.names(metadata)[i]),
+    main = paste(ds, 'dataset\n','Category: ', row.names(metadata)[i]),
     pch = 19,
     cex = 1.3
   )
@@ -216,7 +219,7 @@ for (i in 1:nrow(metadata)){
     col=as.factor(metadata[i,]),
     pch = 19,
     cex = 1.3,
-    main = paste(ds, 'dataset\n', 'Catagory: ', row.names(metadata)[i])
+    main = paste(ds, 'dataset\n', 'Category: ', row.names(metadata)[i])
   )
   legend('topleft', legend = unique(as.factor(metadata[i,])),
     col = unique(as.factor(unique(metadata[i,]))),
@@ -266,10 +269,10 @@ for (i in 1:nrow(metadata)){
 ```
 
 
-Compare each PCA or metabolite to each metadata catagory using lm and anova.
+Compare each PCA or metabolite to each metadata Category using lm and anova.
 
 Expected output: Table, 
-  columns: PCAs, metadata catagory, pvals
+  columns: PCAs, metadata Category, pvals
 ```{r}
 lmMetadata = function(testingData, label){
   index = c()
