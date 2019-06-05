@@ -92,7 +92,7 @@ rm(list = ls()) #clear workspace
 ds = 'gc'
 
 #read in meta-data
-metadata = read.table(file.path('.','gc_data','meta_data.csv'), 
+metadata = read.table(file.path('.','gc','meta_data.csv'), 
   sep=",", 
   header=TRUE, 
   row.names = 1, 
@@ -100,7 +100,7 @@ metadata = read.table(file.path('.','gc_data','meta_data.csv'),
   stringsAsFactors=FALSE)
 
 #read in raw numeric data
-metabolites = read.table(file.path('.', 'gc_data','gc_data_numeric.csv'), 
+metabolites = read.table(file.path('.', ds,'gc_data_numeric.csv'), 
   sep=",", 
   header=TRUE, 
   row.names = 1, 
@@ -323,9 +323,9 @@ lmMetadata = function(testingData, label){
   }
   
   dev.off()
-  newFrame = subset(dFrame, index <= 3 )
+  newFrame = subset(dFrame, index <= 2 )
   write.table(newFrame, 
-    file=paste(ds, "MetaVs",label, "LinearModTop3Pca.txt", sep = ''),
+    file=paste(ds, "MetaVs",label, "LinearModTop2Pca.txt", sep = ''),
     row.names=FALSE, 
     sep="\t"
   )
