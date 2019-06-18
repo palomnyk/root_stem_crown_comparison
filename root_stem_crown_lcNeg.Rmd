@@ -89,10 +89,10 @@ First load the data:
 rm(list = ls()) #clear workspace
 
 #declare dataset
-ds = 'gc'
+ds = 'lcNeg'
 
 #read in meta-data
-metadata = read.table(file.path('.','gc','meta_data.csv'), 
+metadata = read.table(file.path('.', 'gc_data','meta_data.csv'), 
   sep=",", 
   header=TRUE, 
   row.names = 1, 
@@ -100,7 +100,7 @@ metadata = read.table(file.path('.','gc','meta_data.csv'),
   stringsAsFactors=FALSE)
 
 #read in raw numeric data
-metabolites = read.table(file.path('.', ds,'gc_data_numeric.csv'), 
+metabolites = read.table(file.path('.', ds,'lcNeg.csv'), 
   sep=",", 
   header=TRUE, 
   row.names = 1, 
@@ -180,44 +180,6 @@ legend('bottomright',
 ```
 This tells me that we need to use the log transform.
 
-
-To make publication size pdf:
-```{r}
-pdf(paste(ds, "OverallBoxplot.pdf", sep=""), width = 5, height = 3)
-boxplot(metabolites,
-  main = paste(toupper(ds), 'Data with log-transform'),
-  col = as.factor(metadata['experimental group',]),
-  xlab = "Experimental Groups",
-  xaxt = 'n'
-)
-#  axis(side = 2, seq(14,26,2)) figure this out later
-mtext(text= unique(as.factor(metadata['experimental group',])),
-  side = 1,
-  outer = FALSE,
-  at = seq(2, 21, by = 3),
-  line = 1
-  )
-par(new=TRUE)
-stripchart(metabolites,
-  method='jitter',
-  jitter=.2,
-  vertical=TRUE,
-  add=T,
-  pch=16,
-  cex = 0.6,
-  col = 'grey'
-  )
-plot.new()
-legend('bottomright', 
-  legend = unique(as.factor(metadata['experimental group',])), 
-  col = unique(as.factor(metadata['experimental group',])), 
-  pch = 19,
-  cex=0.4
-  )
-dev.off()
-```
-
-
 Next look at PCA.
 ```{r}
 #create PCA
@@ -229,7 +191,6 @@ group_pca = prcomp(t(na.omit(metabolites)),
 myPCA = data.frame(group_pca$x)
 
 summary(group_pca)
-
 ```
 PCA1 and PCA2 account for 84% cummaltively.
 
@@ -362,38 +323,9 @@ lmMetadata = function(testingData, label){
   }
   
   dev.off()
-  newFrame = subset(dFrame, index <= 2 )
+  newFrame = subset(dFrame, index <= 3 )
   write.table(newFrame, 
-    file=paste(ds, "MetaVs",label, "LinearModTop2Pca.txt", sep = ''),
-    row.names=FALSE, 
-    sep="\t"
-  )
-  
-  #table and plots for Kavain Dihydromethysticin Desmethoxyyangonin
-  selectMetab = subset(dFrame, metaNames == "Kavain" || metaNames == "Dihydromethysticin" || metaNames == 'Desmethoxyyangonin')
-  write.table(newFrame, 
-    file=paste(ds, label, "SelectMetab.txt", sep = ''),
-    row.names=FALSE, 
-    sep="\t"
-  )
-  pdf(paste(ds,"MetaVs",label,"LinearModSelectedMetabolites.pdf", sep = ""))
-  #par(mfrow=c(2,2))
-  
-  for( i in 1:nrow(selectMetab)){
-  	aTitle <- paste(label, selectMetab$index[i], "vs",  selectMetab$metaNames[i], "\nAdjusted Pvalue=", selectMetab$metaPvalAdj[i])
-  
-  	plot( as.factor(as.character(metadata[as.character(selectMetab$metaNames[i]),])),
-  	  testingData[selectMetab$index[i],],
-  	  main = aTitle,
-  	  xlab = as.character(selectMetab$metaNames[i]),
-  	  ylab = paste(label, as.character(selectMetab$index[i]))
-  	  )
-  }
-  
-  dev.off()
-  newFrame = subset(selectMetab, index <= 2 )
-  write.table(newFrame, 
-    file=paste(ds, "MetaVs",label, "LinearModTop2PcaSelectMetab.txt", sep = ''),
+    file=paste(ds, "MetaVs",label, "LinearModTop3Pca.txt", sep = ''),
     row.names=FALSE, 
     sep="\t"
   )
@@ -403,9 +335,7 @@ lmMetadata = function(testingData, label){
 
 
 ```{r}
-myPcaT = data.frame(t(myPCA))f
-myPcaT$metaNames = row.names(myPcaT)
-lmMetadata(myPcaT, 'Pca')
+lmMetadata(t(myPCA), 'Pca')
 ```
 
 
@@ -581,32 +511,4 @@ hist(pValues,
   main = 'Pairwise t-tests'
   )
 ```
-
-For publication purposes, I need to get just the metabolites of interest:
-  Kavain
-  Dihydromethysticin
-  Desmethoxyyangonin
-```{r}
-bioActiveArr= c('Kavain', 'Dihydromethysticin', 'Dihydromethysticin.1', 'Desmethoxyyangonin')
-mainBioActive = metabolites[bioActiveArr,]
-lmeMetadata(mainBioActive, 'BioActive')
-```
-
-```{r}
-lmMetadata(mainBioActive, 'BioActive')
-```
-```{r}
-bioActiveTable = read.table(
-  file.path('.', ds, 'output', 'gcMetaVsMetabolitesLme.txt'), 
-  sep="\t", 
-  header=TRUE, 
-  check.names = FALSE,
-  stringsAsFactors=FALSE
-  )
-
-bioActiveTable = subset(bioActiveTable, metaboliteNames %in% bioActiveArr)
-
-```
-
-
 
