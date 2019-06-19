@@ -313,18 +313,18 @@ Compare each PCA or metabolite to each metadata Category using lm and anova.
 Expected output: Table, 
   columns: PCAs, metadata Category, pvals
 ```{r}
-lmMetadata = function(testingData, label){
+lmMetadata = function(testingData, label, metaData){
   index = c()
   metaNames = c()
   metaPval = c()
   
   for (i1 in 1:nrow(testingData)){
-    for (i2 in 1:nrow(metadata)){
+    for (i2 in 1:nrow(metaData)){
       tryCatch(
        { 
-        myLm = lm( unlist(testingData[i1,]) ~ as.factor(as.character(metadata[i2,])))
+        myLm = lm( unlist(testingData[i1,]) ~ as.factor(as.character(metaData[i2,])))
         index = c(index, i1)
-        metaNames = c(metaNames, row.names(metadata)[i2])
+        metaNames = c(metaNames, row.names(metaData)[i2])
         metaPval =  c(metaPval, anova(myLm)$"Pr(>F)"[1])
         },
         error=function(cond) {
@@ -353,50 +353,15 @@ lmMetadata = function(testingData, label){
   for( i in 1:nrow(dFrame)){
   	aTitle <- paste(label, dFrame$index[i], "vs",  dFrame$metaNames[i], "\nAdjusted Pvalue=", dFrame$metaPvalAdj[i])
   
-  	plot( as.factor(as.character(metadata[as.character(dFrame$metaNames[i]),])),
+  	plot( as.factor(as.character(metaData[as.character(dFrame$metaNames[i]),])),
   	  testingData[dFrame$index[i],],
   	  main = aTitle,
   	  xlab = as.character(dFrame$metaNames[i]),
   	  ylab = paste(label, as.character(dFrame$index[i]))
   	  )
   }
-  
   dev.off()
-  newFrame = subset(dFrame, index <= 2 )
-  write.table(newFrame, 
-    file=paste(ds, "MetaVs",label, "LinearModTop2Pca.txt", sep = ''),
-    row.names=FALSE, 
-    sep="\t"
-  )
   
-  #table and plots for Kavain Dihydromethysticin Desmethoxyyangonin
-  selectMetab = subset(dFrame, metaNames == "Kavain" || metaNames == "Dihydromethysticin" || metaNames == 'Desmethoxyyangonin')
-  write.table(newFrame, 
-    file=paste(ds, label, "SelectMetab.txt", sep = ''),
-    row.names=FALSE, 
-    sep="\t"
-  )
-  pdf(paste(ds,"MetaVs",label,"LinearModSelectedMetabolites.pdf", sep = ""))
-  #par(mfrow=c(2,2))
-  
-  for( i in 1:nrow(selectMetab)){
-  	aTitle <- paste(label, selectMetab$index[i], "vs",  selectMetab$metaNames[i], "\nAdjusted Pvalue=", selectMetab$metaPvalAdj[i])
-  
-  	plot( as.factor(as.character(metadata[as.character(selectMetab$metaNames[i]),])),
-  	  testingData[selectMetab$index[i],],
-  	  main = aTitle,
-  	  xlab = as.character(selectMetab$metaNames[i]),
-  	  ylab = paste(label, as.character(selectMetab$index[i]))
-  	  )
-  }
-  
-  dev.off()
-  newFrame = subset(selectMetab, index <= 2 )
-  write.table(newFrame, 
-    file=paste(ds, "MetaVs",label, "LinearModTop2PcaSelectMetab.txt", sep = ''),
-    row.names=FALSE, 
-    sep="\t"
-  )
   print('lmMetadata complete')
 }#end of lmMetadata
 ```
@@ -608,5 +573,14 @@ bioActiveTable = subset(bioActiveTable, metaboliteNames %in% bioActiveArr)
 
 ```
 
+```{r}
+  #table and plots for Kavain Dihydromethysticin Desmethoxyyangonin
+  selectMetab = subset(dFrame, metaNames == "Kavain" || metaNames == "Dihydromethysticin" || metaNames == 'Desmethoxyyangonin')
+  write.table(newFrame, 
+    file=paste(ds, label, "SelectMetab.txt", sep = ''),
+    row.names=FALSE, 
+    sep="\t"
+  )
+```
 
 
