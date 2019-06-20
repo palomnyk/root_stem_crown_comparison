@@ -347,23 +347,25 @@ lmMetadata = function(testingData, label){
   
   write.table(dFrame, file=paste(ds, "MetaVs",label,"LinearMod.txt", sep = ''), row.names=FALSE, sep="\t")
   
-    print(paste('dFrame$metaNames[i] ', dFrame$metaNames[i]))
+  # print(dFrame)
+  # print(as.factor(as.character(metadata[as.character(dFrame$metaNames[i]),])))
+  # print(metadata[as.character(dFrame$metaNames[i]),])
+  # print(unlist(testingData[dFrame$index[i],]))
+  # print(as.character(dFrame$metaNames[i]))
   
   pdf(paste(ds,"MetaVs",label,"LinearMod.pdf", sep = ""))
   #par(mfrow=c(2,2))
   
-  print(testingData[dFrame$index[1],])
-  print(typeof(metadata[as.character(dFrame$metaNames[1]),]))
-  print(typeof(testingData[dFrame$index[i]]))
-  print(length(as.factor(as.character(metadata[as.character(dFrame$metaNames[i]),]))))
-  print(length(unlist((testingData[dFrame$index[i]]))))
-  print(unlist((testingData[dFrame$index[i]])))
-  print(as.factor(as.character(metadata[as.character(dFrame$metaNames[1]),])))
   for( i in 1:nrow(dFrame)){
-    print(i)
   	aTitle <- paste(label, dFrame$index[i], "vs",  dFrame$metaNames[i], "\nAdjusted Pvalue=", dFrame$metaPvalAdj[i])
+  	
+  print(as.factor(as.character(metadata[as.character(dFrame$metaNames[i]),])))
+  print(metadata[as.character(dFrame$metaNames[i]),])
+  print(unlist(testingData[dFrame$index[i],]))
+  print(as.character(dFrame$metaNames[i]))
     
-    plot( as.factor(as.character(metadata[as.character(dFrame$metaNames[i]),])), unlist(testingData[dFrame$metaNames[i],]),
+    plot( as.factor(as.character(metadata[as.character(dFrame$metaNames[i]),])),
+      unlist(testingData[dFrame$index[i],]),
       main = aTitle,
       xlab = as.character(dFrame$metaNames[i]),
       ylab = paste(label, as.character(dFrame$index[i]))
@@ -374,12 +376,15 @@ lmMetadata = function(testingData, label){
   print('lmMetadata complete')
 }#end of lmMetadata
 
-lmMetadata(metabolites, 'Metabolites')
+lmMetadata(mainBioActive, 'BioActiveMetabolitesOnly')
 ```
 
 plot( as.factor(as.character(metadata[as.character(dFrame$metadataCatagories[i]),])),
   	  unlist(testingData[as.character(dFrame$metaboliteNames[i]),]),
 
+```{r}
+typeof(mainBioActive)
+```
 
 
 ```{r}
@@ -566,10 +571,18 @@ For publication purposes, I need to get just the metabolites of interest:
   Dihydromethysticin
   Desmethoxyyangonin
 ```{r}
-bioActiveArr= c('Kavain', 'Dihydromethysticin', 'Dihydromethysticin.1', 'Desmethoxyyangonin')
+#there will be two Dihydromethysticin in lc neg data
+bioActiveArr= c('Kavain', 'Dihydromethysticin', 'Desmethoxyyangonin')
 mainBioActive = metabolites[bioActiveArr,]
-lmeMetadata(mainBioActive, 'BioActive')
+lmeMetadata(mainBioActive, 'BioActiveMetabolitesOnly')
 ```
+
+```{r}
+lmMetadata(mainBioActive, 'BioActiveMetabolitesOnly')
+```
+
+
+
 
 ```{r}
 lmMetadata(mainBioActive, 'BioActive')
