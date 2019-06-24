@@ -148,6 +148,8 @@ metabolites = log2(metabolites + 1)
 ```
 
 ```{r}
+par(bty = 'l', 
+    mar = c(5, 4, 5, 2) + 0.1)
 boxplot(metabolites,
   main = paste(toupper(ds), 'Data with log-transform'),
   col = as.factor(metadata['experimental group',]),
@@ -184,6 +186,8 @@ This tells me that we need to use the log transform.
 To make publication size pdf:
 ```{r}
 pdf(paste(ds, "OverallBoxplot.pdf", sep=""), width = 5, height = 3)
+  par(bty = 'l', 
+    mar = c(5, 4, 5, 2) + 0.1)
 boxplot(metabolites,
   main = paste(toupper(ds), 'Data with log-transform'),
   col = as.factor(metadata['experimental group',]),
@@ -237,44 +241,67 @@ PCA1 and PCA2 account for 84% cummaltively.
 PCA1 and PCA2
 ```{r}
 for (i in 1:nrow(metadata)){
+  par(bty = 'l', 
+    mar = c(5, 4, 5, 2) + 0.1,
+    cex.lab = 1.25
+    )
   plot(myPCA$PC1, myPCA$PC2,
-    col=as.factor(metadata[i,]),
-    main = paste(ds, 'dataset\n','Category: ', row.names(metadata)[i]),
-    pch = 19,
-    cex = 1.3
+    col='black',
+    pch = 21,
+    bg = as.factor(metadata[i,]),
+    cex = 3,
   )
+  plot.new()
   legend('topright', legend = unique(as.factor(metadata[i,])),
     col = unique(as.factor(unique(metadata[i,]))),
-    pch = 1,
+    pch = 19,
     cex=0.6
     )
 }
 ```
 PCA1 and PCA2 -> file for sending to collaborators
 ```{r}
-pdf(paste(ds, "Pca1_2.pdf", sep=""))
-for (i in 1:nrow(metadata)){
-  plot(myPCA$PC1, myPCA$PC2,
-    col=as.factor(metadata[i,]),
-    pch = 19,
-    cex = 1.3,
-    main = paste(ds, 'dataset\n', 'Category: ', row.names(metadata)[i])
-  )
-  legend('topleft', legend = unique(as.factor(metadata[i,])),
-    col = unique(as.factor(unique(metadata[i,]))),
-    pch = 1,
-    cex=0.6
+plot2PcasPdf = function(pcaA, pcaB, xl, yl, pdfName){
+  pdf(paste(ds, pdfName, sep=""))
+  for (i in 1:nrow(metadata)){
+    par(bty = 'l', 
+      mar = c(5, 4, 5, 2) + 0.1,
+      cex.lab = 1.25
+      )
+    plot(pcaA, pcaB,
+      col='black',
+      pch = 21,
+      bg = as.factor(metadata[i,]),
+      cex = 3,
+      main = paste(ds, 'dataset\n', 'Category: ', row.names(metadata)[i]),
+      xlab = xl,
+      ylab = yl
     )
+    plot.new()
+    legend('topright', legend = unique(as.factor(metadata[i,])),
+      col = unique(as.factor(unique(metadata[i,]))),
+      pch = 19,
+      cex=0.6
+      )
+  }
+  dev.off()
+  print('plot created')
 }
-dev.off()
+plot2PcasPdf(myPCA$PC1,
+             myPCA$PC2,
+             'MDS 1, 66% of Variance',
+             'MDS 2, 17% of Variance',
+             "Pca1_2.pdf")
 ```
 
 PCA1 and PCA3
 ```{r}
 for (i in 1:nrow(metadata)){
+  par(bty = 'l', 
+    mar = c(5, 4, 5, 2) + 0.1)
   plot(myPCA$PC1, myPCA$PC3,
-    xlab = 'PCA1, 66% of Variance',
-    ylab = 'PCA3, 3% of Variance',
+    xlab = 'MDS 1, 66% of Variance',
+    ylab = 'MDS 3, 3% of Variance',
     col=as.factor(metadata[i,]),
     main = paste(ds, 'dataset\n', row.names(metadata)[i]),
     sub = paste(ds, 'dataset'),
@@ -288,14 +315,27 @@ for (i in 1:nrow(metadata)){
 }
 ```
 
+PCA1 and PCA3: saving to pdf
+```{r}
+plot2PcasPdf(myPCA$PC1, 
+             myPCA$PC3,
+             'MDS 1, 66% of Variance',
+             'MDS 3, 3% of Variance', 
+             "Pca1_3.pdf")
+```
+
+
+
 PCA2 and PCA3
 ```{r}
 for (i in 1:nrow(metadata)){
+  par(bty = 'l', 
+    mar = c(5, 4, 5, 2) + 0.1)
   plot(myPCA$PC2, myPCA$PC3,
     col=as.factor(metadata[i,]),
     main = paste(ds, 'dataset\n', row.names(metadata)[i]),
-    xlab = 'PCA2, 17% of Variance',
-    ylab = 'PCA3, 6% of Variance',
+    xlab = 'MDS 2, 17% of Variance',
+    ylab = 'MDS 3, 6% of Variance',
     pch = 19,
     cex = 1.3
     )
@@ -307,6 +347,16 @@ for (i in 1:nrow(metadata)){
 }
 ```
 
+Make PDF of PCA2 and PCA3
+```{r}
+plot2PcasPdf(myPCA$PC2, 
+             myPCA$PC3,
+             'MDS 2, 17% of Variance',
+             'MDS 3, 6% of Variance',
+             "Pca2_3.pdf")
+```
+
+
 
 Compare each PCA or metabolite to each metadata Category using lm and anova.
 
@@ -315,8 +365,9 @@ Expected output: Table,
 ```{r}
 lmMetadata = function(testingData, label){
   index = c()
-  metaNames = c()
+  metaName = c()
   metaPval = c()
+  indexName = c()
   
   for (i1 in 1:nrow(testingData)){
     for (i2 in 1:nrow(metadata)){
@@ -324,7 +375,8 @@ lmMetadata = function(testingData, label){
        { 
         myLm = lm( unlist(testingData[i1,]) ~ as.factor(as.character(metadata[i2,])))
         index = c(index, i1)
-        metaNames = c(metaNames, row.names(metadata)[i2])
+        metaName = c(metaName, row.names(metadata)[i2])
+        indexName = c(indexName, row.names(testingData)[i1])
         metaPval =  c(metaPval, anova(myLm)$"Pr(>F)"[1])
         },
         error=function(cond) {
@@ -342,61 +394,33 @@ lmMetadata = function(testingData, label){
   }
   
   metaPvalAdj = p.adjust(metaPval, method = "BH")
-  dFrame <- data.frame(metaPvalAdj,metaNames,index)
+  dFrame <- data.frame(metaPvalAdj,metaName,index, indexName)
   dFrame <- dFrame [order(dFrame$metaPvalAdj),]
   
   write.table(dFrame, file=paste(ds, "MetaVs",label,"LinearMod.txt", sep = ''), row.names=FALSE, sep="\t")
   
   # print(dFrame)
-  # print(as.factor(as.character(metadata[as.character(dFrame$metaNames[i]),])))
-  # print(metadata[as.character(dFrame$metaNames[i]),])
-  # print(unlist(testingData[dFrame$index[i],]))
-  # print(as.character(dFrame$metaNames[i]))
   
   pdf(paste(ds,"MetaVs",label,"LinearMod.pdf", sep = ""))
-  #par(mfrow=c(2,2))
+  
   
   for( i in 1:nrow(dFrame)){
-  	aTitle <- paste(label, dFrame$index[i], "vs",  dFrame$metaNames[i], "\nAdjusted Pvalue=", dFrame$metaPvalAdj[i])
+  	aTitle <- paste(label, ': ', dFrame$indexName[i], " vs ",  dFrame$metaName[i], "\nAdj Pval: ", formatC(dFrame$metaPvalAdj[i]), sep = '')
   	
-  print(as.factor(as.character(metadata[as.character(dFrame$metaNames[i]),])))
-  print(metadata[as.character(dFrame$metaNames[i]),])
-  print(unlist(testingData[dFrame$index[i],]))
-  print(as.character(dFrame$metaNames[i]))
-    
-    plot( as.factor(as.character(metadata[as.character(dFrame$metaNames[i]),])),
+    par(bty = 'l', 
+    mar = c(5, 4, 5, 2) + 0.1)
+    plot( as.factor(as.character(metadata[as.character(dFrame$metaName[i]),])),
       unlist(testingData[dFrame$index[i],]),
       main = aTitle,
-      xlab = as.character(dFrame$metaNames[i]),
-      ylab = paste(label, as.character(dFrame$index[i]))
+      xlab = as.character(dFrame$metaName[i]),
+      ylab = paste(as.character(dFrame$indexName[i]))
       )
   }
   dev.off()
   
   print('lmMetadata complete')
 }#end of lmMetadata
-
-lmMetadata(mainBioActive, 'BioActiveMetabolitesOnly')
 ```
-
-plot( as.factor(as.character(metadata[as.character(dFrame$metadataCatagories[i]),])),
-  	  unlist(testingData[as.character(dFrame$metaboliteNames[i]),]),
-
-```{r}
-typeof(mainBioActive)
-```
-
-
-```{r}
-myPcaT = data.frame(t(myPCA))
-lmMetadata(myPcaT, 'Pca')
-```
-
-
-```{r}
-lmMetadata(metabolites, 'Metabolites')
-```
-
 
 Compare each metabolite to each metadata.
   Expected output:
@@ -483,7 +507,6 @@ lmeMetadata = function(testingData, label){
   dFrame <- data.frame(pvals,pvalAdj,metaboliteNames,metadataCatagories)
   dFrame <- dFrame[order(dFrame$pvalAdj),]
   
-  
   write.table(dFrame, file=paste(ds, "MetaVs", label, "Lme.txt", sep = ''), row.names=FALSE, sep="\t")
   
   write.table(failedLme, file=paste(ds, "FailedMetaVs", label, "Lme.txt", sep = ''), row.names=FALSE, sep="\t")
@@ -497,8 +520,8 @@ lmeMetadata = function(testingData, label){
   dev.off()
   
   pdf(paste(ds, "MetaVs", label, "Lme.pdf", sep=""))
-  #par(mfrow=c(2,2))
-  
+  par(bty = 'l', 
+    mar = c(5, 4, 5, 2) + 0.1)
   for( i in 1:nrow(dFrame)){
   	aTitle <- paste(  dFrame$metaboliteNames[i], "vs",  dFrame$metadataCatagories[i], "\nAdjusted Pvalue=", dFrame$pvalAdj[i])
   
@@ -522,7 +545,23 @@ lmeMetadata(metabolites, 'Metabolites')
 ```{r}
 lmeMetadata(t(myPCA), 'PCA')
 ```
+```{r}
+myPcaT = data.frame(t(myPCA))
+lmMetadata(myPcaT, 'Pca')
+```
 
+```{r}
+lmMetadata(myPcaT[c(1,2,3),], "PcaTop3")
+```
+
+```{r}
+lmeMetadata(myPcaT[c(1,2,3),], "PcaTop3")
+```
+
+
+```{r}
+lmMetadata(metabolites, 'Metabolites')
+```
 
 Pairwise tests (code from Dr. Fodor https://github.com/afodor/metagenomicsTools/blob/master/src/scripts/aaronMetabolites/quickPairwise.txt)
 ```{r}
@@ -582,32 +621,6 @@ lmMetadata(mainBioActive, 'BioActiveMetabolitesOnly')
 ```
 
 
-
-
 ```{r}
 lmMetadata(mainBioActive, 'BioActive')
 ```
-```{r}
-bioActiveTable = read.table(
-  file.path('.', ds, 'output', 'gcMetaVsMetabolitesLme.txt'), 
-  sep="\t", 
-  header=TRUE, 
-  check.names = FALSE,
-  stringsAsFactors=FALSE
-  )
-
-bioActiveTable = subset(bioActiveTable, metaboliteNames %in% bioActiveArr)
-
-```
-
-```{r}
-  #table and plots for Kavain Dihydromethysticin Desmethoxyyangonin
-  selectMetab = subset(dFrame, metaNames == "Kavain" || metaNames == "Dihydromethysticin" || metaNames == 'Desmethoxyyangonin')
-  write.table(newFrame, 
-    file=paste(ds, label, "SelectMetab.txt", sep = ''),
-    row.names=FALSE, 
-    sep="\t"
-  )
-```
-
-
