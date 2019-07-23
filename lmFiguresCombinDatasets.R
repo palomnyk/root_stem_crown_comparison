@@ -63,35 +63,26 @@ lcNeg = read.table(
 datasets = list(gc, lcPos, lcNeg)
 datasetNames = c('GC/MS', 'LC/MS+', 'LC/MS-')
 
-
 for (lab in row.names(metadata)){
   print(lab)
-  print(as.factor(as.character(metadata[lab,])))
+  #print(as.factor(as.character(metadata[lab,])))
   
   pdf(file.path(getwd(), 'figures', paste( lab, "LinearModFigure.pdf", sep = "")))
-  par(par(mfrow=c(1,3)))
+  par(mfrow=c(1,3))
   
   for(ds in 1:length(datasets)){
     print(datasetNames[ds])
     
-    testingData = data.frame(datasets[ds])
+    testingData = log2(data.frame(datasets[ds]) + 1)
     
-    catagories = unique(as.character(metadata[lab,]))
-  
-    # It has to be a flattened df -R's nested loops simply wont do it.
-    # column 1 == values, column 2 == metadata catagory
-    # possible 3rd column == metabolite for bioactives (after subsetting)
-    
+    #make new flat df
     origDim = dim(testingData)
     totalCells = origDim[1]*origDim[2]
     metabol = character(totalCells)
     auc = numeric(totalCells)
     metaDat = character(totalCells)
-    
-    
     appendCounter = 1
     appendEnd = origDim[1]
-    
     for(i in 1:origDim[2]){
       metabol[appendCounter:appendEnd] = row.names(testingData)
       metaDat[appendCounter:appendEnd] = rep(metadata[lab,i], origDim[1])
@@ -101,22 +92,34 @@ for (lab in row.names(metadata)){
     }
     flatDf = data.frame(metabol, auc, metaDat)
     
-    myLm = lm( flatDf ~ as.factor(as.character(metadata[lab,])))
-    metaPval =  c(metaPval, anova(myLm)$"Pr(>F)"[1])
-    
-    aTitle <- paste(label, ': ', dFrame$indexName[i], " vs ",  dFrame$metaName[i], "\nAdj Pval: ", formatC(dFrame$metaPvalAdj[i]), sep = '')
-    
-    par(bty = 'l', 
-        mar = c(5, 4, 5, 2) + 0.1)
-    plot( as.factor(as.character(metadata[as.character(metadata[lab]),])),
-          flatDf,
+    myLm = lm( flatDf$auc ~ as.factor(flatDf$metaDat))
+    metaPval =  anova(myLm)$"Pr(>F)"[1]
+    print(metaPval)
+
+    aTitle <- paste(lab, datasetNames[ds], "\nPval: ", formatC(metaPval), sep = '')
+
+    # par(bty = 'l',
+    #     mar = c(5, 4, 5, 2) + 0.1)
+    plot( flatDf$auc ~ as.factor(flatDf$metaDat),
           main = aTitle,
           xlab = as.character(lab),
-          ylab = paste(as.character(datasets[ds])),
+          ylab = paste(as.character(datasetNames[ds]))
+          #unique(as.character(metadata[lab,]))
           #col = brewer.pal(length(metadata[as.character(lab),]),"Accent")
     )
-    
+    stripchart(flatDf$auc ~ as.factor(flatDf$metaDat),
+               method='jitter',
+               jitter=.2,
+               vertical=TRUE,
+               add=T,
+               pch=16,
+               cex = 0.6,
+               col = 'grey'
+    )
+
   }#end datasets loop
+  
+  dev.off()
   
 }#end row.names(metadata) loop
 
