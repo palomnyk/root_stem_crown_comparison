@@ -62,13 +62,20 @@ lcNeg = read.table(
 
 datasets = list(gc, lcPos, lcNeg)
 datasetNames = c('GC/MS', 'LC/MS+', 'LC/MS-')
+flatDatasets = list()
+
+interest = c('tissue', 'structural location', 'root vs stem')
+
+
+pvals = c()
+catagory = c()
+datasetNum = c()
+
+pdf(file.path(getwd(), 'figures', paste("fullDsLm.pdf", sep = "")))
+#par(mfrow=c(3,3)) #uncomment when using interst in first loop
 
 for (lab in row.names(metadata)){
   print(lab)
-  #print(as.factor(as.character(metadata[lab,])))
-  
-  pdf(file.path(getwd(), 'figures', paste( lab, "LinearModFigure.pdf", sep = "")))
-  par(mfrow=c(1,3))
   
   for(ds in 1:length(datasets)){
     print(datasetNames[ds])
@@ -91,19 +98,20 @@ for (lab in row.names(metadata)){
       appendEnd = appendEnd + origDim[1]
     }
     flatDf = data.frame(metabol, auc, metaDat)
+    flatDatasets[ds] = flatDf;
     
     myLm = lm( flatDf$auc ~ as.factor(flatDf$metaDat))
     metaPval =  anova(myLm)$"Pr(>F)"[1]
     print(metaPval)
 
-    aTitle <- paste(lab, datasetNames[ds], "\nPval: ", formatC(metaPval), sep = '')
+    aTitle <- paste(lab, datasetNames[ds], "\nPval:", formatC(metaPval), sep = ' ')
 
-    # par(bty = 'l',
-    #     mar = c(5, 4, 5, 2) + 0.1)
+    par(bty = 'l',
+        mar = c(1, 1, 1, 1) + 1)
     plot( flatDf$auc ~ as.factor(flatDf$metaDat),
           main = aTitle,
           xlab = as.character(lab),
-          ylab = paste(as.character(datasetNames[ds]))
+          ylab = ''
           #unique(as.character(metadata[lab,]))
           #col = brewer.pal(length(metadata[as.character(lab),]),"Accent")
     )
@@ -118,9 +126,9 @@ for (lab in row.names(metadata)){
     )
 
   }#end datasets loop
-  
-  dev.off()
+
   
 }#end row.names(metadata) loop
 
+dev.off()
 
