@@ -77,36 +77,31 @@ for (lab in row.names(metadata)){
     testingData = data.frame(datasets[ds])
     
     catagories = unique(as.character(metadata[lab,]))
-    
-    testingData[1,]
-    
-    myRow = as.vector(testingData[1, ])
   
     # It has to be a flattened df -R's nested loops simply wont do it.
     # column 1 == values, column 2 == metadata catagory
     # possible 3rd column == metabolite for bioactives (after subsetting)
     
-    lists = list()
-    listLevels = levels(as.factor(metadata[lab,]))
-    metaFact = as.factor(metadata[lab,])
-    metaVect = as.vector(metadata[lab,])
-    testDim = dim(testingData)
-    dfLength = testDim[1]*testDim[2]
-    flatDf = data.frame(numeric(dfLength), character(dfLength))
+    origDim = dim(testingData)
+    totalCells = origDim[1]*origDim[2]
+    metabol = character(totalCells)
+    auc = numeric(totalCells)
+    metaDat = character(totalCells)
     
-    for (lev in length(listLevels)) {
-      print(lev)
-      lists[lev] = list(0)
+    
+    appendCounter = 1
+    appendEnd = origDim[1]
+    
+    for(i in 1:origDim[2]){
+      metabol[appendCounter:appendEnd] = row.names(testingData)
+      metaDat[appendCounter:appendEnd] = rep(metadata[lab,i], origDim[1])
+      auc[appendCounter:appendEnd] = testingData[,i]
+      appendCounter = appendCounter + origDim[1]
+      appendEnd = appendEnd + origDim[1]
     }
-    for(i in 1:dim(testingData)[2]){
-      print(match(metaVect[i], listLevels))
-      print(length(testingData[,i]))
-      index = match(metaVect[i], listLevels)
-      append(lists[[index]], testingData[,i])
-    }
-    newDf = as.data.frame(lists())
-
-    myLm = lm( testingData ~ as.factor(as.character(metadata[lab,])))
+    flatDf = data.frame(metabol, auc, metaDat)
+    
+    myLm = lm( flatDf ~ as.factor(as.character(metadata[lab,])))
     metaPval =  c(metaPval, anova(myLm)$"Pr(>F)"[1])
     
     aTitle <- paste(label, ': ', dFrame$indexName[i], " vs ",  dFrame$metaName[i], "\nAdj Pval: ", formatC(dFrame$metaPvalAdj[i]), sep = '')
@@ -114,7 +109,7 @@ for (lab in row.names(metadata)){
     par(bty = 'l', 
         mar = c(5, 4, 5, 2) + 0.1)
     plot( as.factor(as.character(metadata[as.character(metadata[lab]),])),
-          testingData,
+          flatDf,
           main = aTitle,
           xlab = as.character(lab),
           ylab = paste(as.character(datasets[ds])),
