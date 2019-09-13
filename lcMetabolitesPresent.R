@@ -34,14 +34,31 @@ addEmptyRowIfRnAbsent = function(rowName, df){
   }
 }
 
-lcPos[] <- lapply(lcPos, function(x) ifelse(x>0, '+', x))
-lcNeg[] <- lapply(lcNeg, function(x) ifelse(x>0, '+', x))
-
 for (cm in commonMetabolites){
   lcPos = addEmptyRowIfRnAbsent(cm, lcPos)
   lcNeg = addEmptyRowIfRnAbsent(cm, lcNeg)
 }
 
+reorderDf = function(df){
+  return(df[ order(row.names(df)),])
+  #df[ order(as.numeric(row.names(df))),]
+}
+
+lcPos = reorderDf(lcPos)
+lcNeg = reorderDf(lcNeg)
+
+write.table(lcPos,
+            file = 'lcPosExtended.csv',
+            sep = ',',
+            row.names=T,
+)
+write.table(lcNeg,
+            file = 'lcNegExtended.csv',
+            sep = ',',
+            row.names=T)
+
+lcPos[] <- lapply(lcPos, function(x) ifelse(x>0, '+', x))
+lcNeg[] <- lapply(lcNeg, function(x) ifelse(x>0, '+', x))
 lcPos[is.na(lcPos)] = '-'
 lcNeg[is.na(lcNeg)] = '-'
 
@@ -49,25 +66,30 @@ myDf = data.frame(row.names = commonMetabolites)
 
 newColNames = unique(substr(colnames(lcPos),0,3))
 
-colIntervals = c(1,2,3)
-for (colName in newColNames){
-  #combine columns
-  myDf[colName] <- do.call(paste0, lcPos[,colIntervals])
 
-  colIntervals = colIntervals + 3
-  print(colIntervals)
+combineColumns = function(df){
+  myDf = data.frame(row.names = commonMetabolites)
+  colIntervals = c(1,2,3)
+  for (colName in newColNames){
+    #combine columns
+    myDf[colName] <- do.call(paste0, df[,colIntervals])
+    colIntervals = colIntervals + 3
+  }
+  return(myDf)
 }
 
-print(newColNames)
+lcPos = combineColumns(lcPos)
+lcNeg = combineColumns(lcNeg)
 
 write.table(lcPos,
-            file = 'lcPosExtended.csv',
+            file = 'lcPosCombinedSymbol.csv',
             sep = ',',
             row.names=T,
-            )
+)
 write.table(lcNeg,
-            file = 'lcNegExtended.csv',
+            file = 'lcNegCombinedSymbol.csv',
             sep = ',',
             row.names=T)
+
 
 
