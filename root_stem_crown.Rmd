@@ -570,7 +570,7 @@ lmeMetadata = function(testingData, label){
   	  main = aTitle,
   	  xlab = as.character(dFrame$metadataCatagories[i]),
   	  ylab = as.character(dFrame$metaboliteNames[i]),
-  	  # col = as.factor(as.character(metadata[as.character(dFrame$metadataCatagories[i]),]))
+  	  col = as.factor(as.character(metadata[as.character(dFrame$metadataCatagories[i]),]))
   	  )
   }
   dev.off()
@@ -710,6 +710,194 @@ hist(pValues,
   xlab = 'Uncorrected pvalues',
   main = 'Pairwise t-tests'
   )
+```
+
+
+```{r}
+#significant metabolites from the GC data lme
+sigMetabols = "Tetrahydro-11-methoxyiangonin
+Tetrahydro-11-methoxyiangonin
+Tetrahydro-11-methoxyiangonin
+Hedycaryol
+Kavain
+Kavain
+Desmethoxyyangonin
+Dihydromethysticin
+Kavain
+Desmethoxyyangonin
+Yangonin
+5,7-Dimethoxyflavanone
+Hispidin
+Hedycaryol
+Dihydromethysticin
+Pipermethystine
+Flavokavain C
+Pinostrobin
+Pyrrolidine, 1-(m-methoxycinnamoyl)-
+Flavokavain C
+Pinostrobin
+5,7-Dimethoxyflavanone
+Hedycaryol
+Bornyl cinnamate
+5-Hydroxy-4',7-dimethoxyflavanone
+Flavokavain B
+Flavokavain B
+5,7-Dimethoxyflavanone
+5-Hydroxy-4',7-dimethoxyflavanone
+Flavokavain C
+Pinostrobin
+Hispidin
+Flavokavain B
+Yangonin
+Pyrrolidine, 1-(m-methoxycinnamoyl)-
+Bornyl cinnamate
+Bornyl cinnamate
+Desmethoxyyangonin
+Dihydromethysticin
+Dihydro-5,6-dehydrokawain
+Dihydro-5,6-dehydrokawain
+Dihydroalatamide
+Dihydro-5,6-dehydrokawain
+5-Hydroxy-4',7-dimethoxyflavanone
+Hispidin
+Hydrocinnamic acid
+Pyrrolidine, 1-(m-methoxycinnamoyl)-
+Yangonin
+Linoelaidic acid
+Benzenepropanal
+13-Tetradece-11-yn-1-ol
+Linoelaidic acid
+Hydrocinnamic acid
+Palmitic Acid
+13-Tetradece-11-yn-1-ol
+13-Tetradece-11-yn-1-ol
+Linoelaidic acid
+Palmitic Acid
+Benzenepropanal
+Flavokawain A
+Palmitic Acid
+Hydrocinnamic acid
+δ-Cadinol
+Pipermethystine
+δ-Cadinol
+Flavokawain A"
+
+sigMetabols = unlist(strsplit(sigMetabols,"\n"))
+
+print(unique(sigMetabols))
+```
+
+```{r}
+allMetabols = "Tetrahydro-11-methoxyiangonin
+Tetrahydro-11-methoxyiangonin
+Tetrahydro-11-methoxyiangonin
+Hedycaryol
+Kavain
+Kavain
+Desmethoxyyangonin
+Dihydromethysticin
+Kavain
+Desmethoxyyangonin
+Yangonin
+5,7-Dimethoxyflavanone
+Hispidin
+Hedycaryol
+Dihydromethysticin
+Pipermethystine
+Flavokavain C
+Pinostrobin
+Pyrrolidine, 1-(m-methoxycinnamoyl)-
+Flavokavain C
+Pinostrobin
+5,7-Dimethoxyflavanone
+Hedycaryol
+Bornyl cinnamate
+5-Hydroxy-4',7-dimethoxyflavanone
+Flavokavain B
+Flavokavain B
+5,7-Dimethoxyflavanone
+5-Hydroxy-4',7-dimethoxyflavanone
+Flavokavain C
+Pinostrobin
+Hispidin
+Flavokavain B
+Yangonin
+Pyrrolidine, 1-(m-methoxycinnamoyl)-
+Bornyl cinnamate
+Bornyl cinnamate
+Desmethoxyyangonin
+Dihydromethysticin
+Dihydro-5,6-dehydrokawain
+Dihydro-5,6-dehydrokawain
+Dihydroalatamide
+Dihydro-5,6-dehydrokawain
+5-Hydroxy-4',7-dimethoxyflavanone
+Hispidin
+Hydrocinnamic acid
+Pyrrolidine, 1-(m-methoxycinnamoyl)-
+Yangonin
+Linoelaidic acid
+Benzenepropanal
+13-Tetradece-11-yn-1-ol
+Linoelaidic acid
+Hydrocinnamic acid
+Palmitic Acid
+13-Tetradece-11-yn-1-ol
+13-Tetradece-11-yn-1-ol
+Linoelaidic acid
+Palmitic Acid
+Benzenepropanal
+Flavokawain A
+Palmitic Acid
+Hydrocinnamic acid
+δ-Cadinol
+Pipermethystine
+δ-Cadinol
+Flavokawain A
+α-epi-7-epi-5-Eudesmol
+Squalene
+Pipermethystine
+Dihydrokavain
+(E)-N-Cinnamoylpiperidine
+Flavokawain A
+Dihydroalatamide
+α-epi-7-epi-5-Eudesmol
+Dihydrokavain
+(E)-N-Cinnamoylpiperidine
+Dihydrokavain
+Dihydroalatamide
+Squalene
+Squalene
+1,10-Undecadiene"
+
+allMetabols = unlist(strsplit(allMetabols,"\n"))
+
+print(unique(allMetabols))
+```
+```{r}
+#Values in sigMetabols that are not in allMetabols
+notSig = allMetabols[!match(allMetabols, sigMetabols, nomatch = F)]
+print(unique(notSig))
+```
+
+We want to test for covariance among the tissue types.  Specifically, we want to know if the "whole" tissues covary with the "peels" and "no peel" sections.
+
+First step is to put the data in a long format so that 
+```{r}
+metabo_long1 = metabolites[,seq(1,21,3)]
+metabo_long2 = metabolites[,seq(2,21,3)]
+row.names(metabo_long2) = paste(row.names(metabo_long2), '1')
+metabo_long3 = metabolites[,seq(3,21,3)]
+row.names(metabo_long3) = paste(row.names(metabo_long2), '2')
+names(metabo_long2) = names(metabo_long1)
+names(metabo_long3) = names(metabo_long1)
+
+metabo_long = rbind(metabo_long1,metabo_long2,metabo_long3)
+```
+
+Now we need to make a correlation matrix with metabo_long.
+```{r}
+metabolite_cor = cor(metabo_long, use='na.or.complete')
 ```
 
 
