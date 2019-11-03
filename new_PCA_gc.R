@@ -1,11 +1,12 @@
 # New PCA plot
 
 setwd(file.path('~','git','root_stem_crown_comparison'))
+outputDir = "3Nov2019"
 
 ds = 'gc'
 
 #read in meta-data
-metadata = read.table(file.path('.','data','meta_data_no_whole.csv'), 
+metadata = read.table(file.path('.','data','meta_data_no_whole_noRootVsStem.csv'), 
                       sep=",", 
                       header=TRUE, 
                       row.names = 1, 
@@ -17,6 +18,11 @@ metabolites = read.table(file.path('.', 'data','gc_data_no_whole.csv'),
                          header=TRUE, 
                          row.names = 1, 
                          check.names = FALSE)
+
+if(!dir.exists(outputDir)){
+  dir.create(outputDir, showWarnings = TRUE, recursive = FALSE, mode = "0777")
+}
+setwd(file.path('~','git','root_stem_crown_comparison', outputDir))
 
 metabolites = log2(metabolites + 1)
 
@@ -156,7 +162,7 @@ lmeMetadata = function(testingData, label){
           main = aTitle,
           xlab = as.character(dFrame$metadataCatagories[i]),
           ylab = as.character(dFrame$metaboliteNames[i]),
-          col = as.factor(as.character(metadata[as.character(dFrame$metadataCatagories[i]),]))
+          col = c(1,1,1,2,2)
     )
   }
   dev.off()
@@ -286,9 +292,13 @@ pairwiseTtest = function(df, metaLvl, lab){
   print('PairwiseTtest complete!')
 }
 
-# lmeMetadata(metabolites, 'NoWhole')
+lmeMetadata(t(myPCA), 'NoWholePca')
+lmeMetadata(metabolites, 'NoWhole')
 lmMetadata(metabolites, 'NoWhole')
-# pairwiseTtest(t(myPCA), 'tissue', 'NoWholePca')
-# pairwiseTtest(t(myPCA), 'structural location', 'NoWholePca')
-# pairwiseTtest(metabolites, 'tissue', 'NoWholeMetabolites')
-# pairwiseTtest(metabolites, 'structural location', 'NoWholeMetabolites')
+pairwiseTtest(t(myPCA), 'tissue', 'NoWholePca')
+pairwiseTtest(t(myPCA), 'structural location', 'NoWholePca')
+# pairwiseTtest(t(myPCA), 'root vs stem', 'NoWholePca')
+# pairwiseTtest(metabolites, 'root vs stem', 'NoWholePca')
+pairwiseTtest(metabolites, 'tissue', 'NoWholeMetabolites')
+pairwiseTtest(metabolites, 'structural location', 'NoWholeMetabolites')
+print(summary(group_pca))
