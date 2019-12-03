@@ -1,0 +1,106 @@
+PCA,iGroups,jGroup,BH adjusted p-value
+PC1,crown root,stem,0.000475451518361384
+PC1,lateral root,stem,0.00256988292756395
+PC2,lateral root,stem,0.00605272582131285
+PC7,crown root,lateral root,0.0398778592294604
+PC1,crown root,lateral root,0.0618927561107067
+PC2,crown root,lateral root,0.091878191804537
+PC4,crown root,lateral root,0.224781337560494
+PC5,crown root,lateral root,0.224781337560494
+PC8,crown root,lateral root,0.224781337560494
+PC5,lateral root,stem,0.30436519650896
+PC4,lateral root,stem,0.346173379581629
+PC6,lateral root,stem,0.346173379581629
+PC21,lateral root,stem,0.346173379581629
+PC9,crown root,lateral root,0.968870619954372
+PC1,crown root,crown root,1
+PC1,lateral root,lateral root,1
+PC2,crown root,crown root,1
+PC2,crown root,stem,1
+PC2,lateral root,lateral root,1
+PC3,crown root,crown root,1
+PC3,crown root,lateral root,1
+PC3,crown root,stem,1
+PC3,lateral root,lateral root,1
+PC3,lateral root,stem,1
+PC4,crown root,crown root,1
+PC4,crown root,stem,1
+PC4,lateral root,lateral root,1
+PC5,crown root,crown root,1
+PC5,crown root,stem,1
+PC5,lateral root,lateral root,1
+PC6,crown root,crown root,1
+PC6,crown root,lateral root,1
+PC6,crown root,stem,1
+PC6,lateral root,lateral root,1
+PC7,crown root,crown root,1
+PC7,crown root,stem,1
+PC7,lateral root,lateral root,1
+PC7,lateral root,stem,1
+PC8,crown root,crown root,1
+PC8,crown root,stem,1
+PC8,lateral root,lateral root,1
+PC8,lateral root,stem,1
+PC9,crown root,crown root,1
+PC9,crown root,stem,1
+PC9,lateral root,lateral root,1
+PC9,lateral root,stem,1
+PC10,crown root,crown root,1
+PC10,crown root,lateral root,1
+PC10,crown root,stem,1
+PC10,lateral root,lateral root,1
+PC10,lateral root,stem,1
+PC11,crown root,crown root,1
+PC11,crown root,lateral root,1
+PC11,crown root,stem,1
+PC11,lateral root,lateral root,1
+PC11,lateral root,stem,1
+PC12,crown root,crown root,1
+PC12,crown root,lateral root,1
+PC12,crown root,stem,1
+PC12,lateral root,lateral root,1
+PC12,lateral root,stem,1
+PC13,crown root,crown root,1
+PC13,crown root,lateral root,1
+PC13,crown root,stem,1
+PC13,lateral root,lateral root,1
+PC13,lateral root,stem,1
+PC14,crown root,crown root,1
+PC14,crown root,lateral root,1
+PC14,crown root,stem,1
+PC14,lateral root,lateral root,1
+PC14,lateral root,stem,1
+PC15,crown root,crown root,1
+PC15,crown root,lateral root,1
+PC15,crown root,stem,1
+PC15,lateral root,lateral root,1
+PC15,lateral root,stem,1
+PC16,crown root,crown root,1
+PC16,crown root,lateral root,1
+PC16,crown root,stem,1
+PC16,lateral root,lateral root,1
+PC16,lateral root,stem,1
+PC17,crown root,crown root,1
+PC17,crown root,lateral root,1
+PC17,crown root,stem,1
+PC17,lateral root,lateral root,1
+PC17,lateral root,stem,1
+PC18,crown root,crown root,1
+PC18,crown root,lateral root,1
+PC18,crown root,stem,1
+PC18,lateral root,lateral root,1
+PC18,lateral root,stem,1
+PC19,crown root,crown root,1
+PC19,crown root,lateral root,1
+PC19,crown root,stem,1
+PC19,lateral root,lateral root,1
+PC19,lateral root,stem,1
+PC20,crown root,crown root,1
+PC20,crown root,lateral root,1
+PC20,crown root,stem,1
+PC20,lateral root,lateral root,1
+PC20,lateral root,stem,1
+PC21,crown root,crown root,1
+PC21,crown root,lateral root,1
+PC21,crown root,stem,1
+PC21,lateral root,lateral root,1
